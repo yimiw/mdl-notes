@@ -1,0 +1,5 @@
+# Typst build outputs
+*.pdf
+
+# System files
+.DS_Store
