@@ -1,4 +1,4 @@
-#import "tmp.typ": *
+#import "assest/tmp.typ": *
 #import "@preview/xarrow:0.3.1": xarrow
 #show: project.with(authors: ((name: "", email: ""),))
 
@@ -53,15 +53,15 @@
 ]
 
 #cbox(title: [$EE$, Var, Cov])[
-  $EE[A X+b]=A EE[X]+b$; *Tower*: $EE_Y[EE_X[X|Y]]=EE[X]$
+  $EE[A X+b]=A EE[X]+b$; *Tower*: $EE_Y [EE_X [X|Y]]=EE[X]$
   $"Var"[X]=EE[(X-EE[X])^2]$; $"Cov"[X,Y]=EE[X Y]-EE[X]EE[Y]$
   $"Var"[X+Y]="Var"[X]+"Var"[Y]+2"Cov"[X,Y]$
   *LOTV*: $"Var"[X]=EE["Var"[X|Y]]+"Var"[EE[X|Y]]$
 ]
 
 #cbox(title: [Info Theory])[
-  *Entropy*: $H[p]=-EE_p[log p(x)]$; Gauss $H=1/2 log((2pi e)^d det Sigma)$
-  *KL*: $"KL"(p||q)=EE_p[log p/q]>=0$; need $"supp"(q) subset.eq "supp"(p)$
+  *Entropy*: $H[p]=-EE_p [log p(x)]$; Gauss $H=1/2 log((2pi e)^d det Sigma)$
+  *KL*: $"KL"(p||q)=EE_p [log p/q]>=0$; need $"supp"(q) subset.eq "supp"(p)$
   *Forward* $"KL"(p||q)$: mean-seeking覆盖; *Reverse* $"KL"(q||p)$: mode-seeking过confident
   *MI*: $I(X;Y)=H[X]-H[X|Y]=H[Y]-H[Y|X]>=0$, symmetric
   *Cond MI*: $I(X;Y|Z)=H[X|Z]-H[X|Y,Z]$
@@ -76,20 +76,14 @@
 = Bayesian Linear Regression
 
 #cbox(title: [Model])[
-  $y=w^top x+epsilon$, $epsilon tilde cal(N)(0,sigma_n^2)$; Prior: $w tilde cal(N)(0,sigma_p^2 I)$
-]
-
-#cbox(title: [Posterior])[
-  $w|X,y tilde cal(N)(mu,Sigma)$ where
-  $Sigma^(-1)=sigma_n^(-2)X^top X+sigma_p^(-2)I$; $mu=sigma_n^(-2)Sigma X^top y$
-  Note: $Sigma$只依赖$X$, 不依赖$y$
+  $y=w^top x+epsilon$, $epsilon tilde cal(N)(0,sigma_n^2)$; *Prior*: $w tilde cal(N)(0,sigma_p^2 I)$, $L_2$正则/weight decay; *Posterior*:   $w|X,y tilde cal(N)(mu,Sigma)$ where 
+  $ Sigma^(-1)=sigma_n^(-2)X^top X+sigma_p^(-2)I$; $mu=sigma_n^(-2)Sigma X^top y $
+  , $Sigma$只依赖$X$, 不依赖$y$
 ]
 
 #cbox(title: [Prediction])[
-  $y_*|x_*,X,y tilde cal(N)(x_*^top mu, x_*^top Sigma x_*+sigma_n^2)$
-]
-
-#cbox(title: [Connection])[
+  $y^*|x^*,X,y tilde cal(N)(x^*^top mu, x^*^top Sigma x^*+sigma_n^2)$
+  $mu$⇔`RidgeReg`解(=`MAP`解), $Sigma$则对应其Hessian的逆.
   `MAP`=Ridge with $lambda=sigma_n^2/sigma_p^2$; Online update: $O(n d^2)$
 ]
 
@@ -102,24 +96,24 @@
 
 #cbox(title: [GP Regression])[
   $y tilde cal(N)(0,K_(X X)+sigma_n^2 I)=cal(N)(0,K_y)$
-  *Mean*: $mu_*(x)=k(x,X)K_y^(-1)y$
-  *Cov*: $k_*(x,x')=k(x,x')-k(x,X)K_y^(-1)k(X,x')$
-  *Predictive*: $y_* tilde cal(N)(mu_*, k_*+sigma_n^2)$
+  *Mean*: $mu^*(x)=k(x,X)K_y^(-1)y$
+  *Cov*: $k^*(x,x')=k(x,x')-k(x,X)K_y^(-1)k(X,x')$
+  *Predictive*: $y^* tilde cal(N)(mu^*, k^*(x,x') +sigma_n^2)$
 ]
 
 #cbox(title: [Kernels])[
   *Linear*: $k(x,x')=x^top x'+sigma_0^2$
-  *RBF*: $k=exp(-||x-x'||^2/(2ell^2))$ smooth无限可微
-  *Exponential*: $k=exp(-||x-x'||/ell)$ rough
+  *RBF*: $k=exp((-||x-x'||^2) /(2ell^2))$ smooth无限可微
+  *Exponential*: $k=exp(-||x-x'||\/ell)$ rough
   *Matérn*: $nu=0.5$→Exp, $nu arrow infinity$→RBF, $nu$控制smoothness
-  *Periodic*: $k=sigma^2 exp(-2/ell^2 sin^2(pi|x-x'|/p))$
+  *Periodic*: $k=sigma^2 exp(-2/ell^2 sin^2((pi|x-x'|)/p))$
   *Closure*: $k_1+k_2$, $k_1 dot k_2$, $c dot k$, $exp(k)$仍valid kernel
   *Stationary*: $k(x,x')=k(x-x')$; *Isotropic*: $k=k(||x-x'||)$
 ]
 
 #cbox(title: [Marginal Lik])[
   $log p(y|X)=-1/2 y^top K_y^(-1)y-1/2 log det(K_y)+C$
-  Balance: Datafit(前) vs Complexity(后)
+  Balance: Data fit(前) vs Complexity(后)
 ]
 
 #cbox(title: [Approx $O(n^3)$ → lower])[
@@ -135,22 +129,23 @@
 ]
 
 #cbox(title: [ELBO])[
-  $cal(L)=EE_q[log p(y|theta)]-"KL"(q(theta)||p(theta))$
-  $log p(y)=cal(L)+"KL"(q||p(dot|D))>=cal(L)$
+  $cal(L)=EE_q [log p(y|theta)]-"KL"(q(theta)||p(theta))$
+  且$log p(y)=cal(L)+"KL"(q||p(dot|D))>=cal(L)$
   Max ELBO ⇔ Min KL to posterior
-  *Derivation*: Jensen's $log EE_q[p/q]>=EE_q[log p/q]$
-]
+  *Derivation*: Jensen: $log EE_q [p/q]>=EE_q [log p/q]$
 
-#cbox(title: [Gaussian KL])[
-  $"KL"(cal(N)_p||cal(N)_q)=1/2[tr(Sigma_q^(-1)Sigma_p)+(mu_p-mu_q)^top Sigma_q^(-1)(mu_p-mu_q)-d+log(det Sigma_q/det Sigma_p)]$
+  *KL of Gaussian*
+  $"KL"(cal(N)_p||cal(N)_q)=1/2[tr(Sigma_q^(-1)Sigma_p)+(mu_p-mu_q)^top Sigma_q^(-1)(mu_p-mu_q)-d+log det(Sigma_q ^(-1) -  Sigma_p)]$
+
+  $"KL"(cal(N)_p||cal(N)_q)= 1/2 [ (mu_p - mu_q)^2/(sigma_q^2) + sigma_p^2 / sigma_q^2 -1 - log sigma_p^2 / sigma_q^2 ]$ 1dim时.
   *Product*: $"KL"(Q_X Q_Y||P_X P_Y)="KL"(Q_X||P_X)+"KL"(Q_Y||P_Y)$
 ]
 
 #cbox(title: [Reparam Trick])[
   $theta=g(epsilon;lambda)$, $epsilon tilde phi$
-  $EE_(theta tilde q)[f(theta)]=EE_epsilon[f(g(epsilon;lambda))]$
+  $EE_(theta tilde q)[f(theta)]=EE_epsilon [f(g(epsilon;lambda))]$
   *Gaussian*: $theta=mu+sigma dot.circle epsilon$, $epsilon tilde cal(N)(0,I)$
-  Enable gradient: $nabla_lambda EE_q[f]=EE_phi[nabla_lambda f(g(epsilon;lambda))]$
+  Enable gradient: $nabla_lambda EE_q [f]=EE_phi [nabla_lambda f(g(epsilon;lambda))]$
 ]
 
 #cbox(title: [Laplace Approx])[
@@ -196,7 +191,7 @@
 #cbox(title: [Langevin & SGLD])[
   *Langevin*: $R(x'|x)=cal(N)(x';x-eta nabla f(x),2eta I)$ where $p prop e^(-f)$
   *MALA*: MH-corrected Langevin, poly-time for log-concave
-  *SGLD*: $theta_(t+1)=theta_t+epsilon_t(nabla log p(theta)+nabla log p(D|theta))+sqrt(2epsilon_t)xi$
+  *SGLD*: $theta_(t+1)=theta_t+epsilon_t [nabla log p(theta)+nabla log p(D|theta)]+sqrt(2epsilon_t)xi$
   Converge: $sum_t epsilon_t=infinity$, $sum_t epsilon_t^2<infinity$; 常用$epsilon_t in Theta(t^(-1/3))$
 ]
 
@@ -210,34 +205,33 @@
 #cbox(title: [Model])[
   Prior: $theta tilde cal(N)(0,sigma_p^2 I)$
   *Homoscedastic*: $y|x,theta tilde cal(N)(f(x;theta),sigma^2)$ fixed noise
-  *Heteroscedastic*: $y tilde cal(N)(f_mu (x;theta),exp(f_sigma (x;theta)))$ input-dependent noise
+  *Heteroscedastic*: $y tilde cal(N)(f_mu (x;theta),exp{f_sigma (x;theta)})$ input-dependent noise
 ]
 
 #cbox(title: [Hetero NLL])[
-  $-log p(y|x,theta)=C+1/2[log sigma^2(x)+((y-mu(x))^2)/(sigma^2(x))]$
+  $-log p(y|x,theta)=C+1/2[log sigma^2(x)+[(y-mu(x)]^2)/(sigma^2(x))]$
   Model can "blame" noise but pays $log sigma$ penalty防collapse
 ]
 
 #cbox(title: [MAP for BNN])[
-  $hat(theta)_"MAP"=arg min 1/(2sigma_p^2)||theta||^2+1/(2sigma_n^2)sum_i(y_i-f(x_i;theta))^2$
+  $hat(theta)_"MAP"=arg min 1/(2sigma_p^2)||theta||^2+1/(2sigma_n^2)sum_i [y_i-f(x_i;theta)]^2$
   Weight decay = Gaussian prior
 ]
 
 #cbox(title: [Prediction])[
-  $p(y_*|x_*,D)approx 1/m sum_(j=1)^m p(y_*|x_*,theta^((j)))$, $theta^((j)} tilde q$
-  MC approx of posterior predictive
+  $p(y^*|x^*,D)approx 1/m sum_(j=1)^m p(y^*|x^*,theta^((j)))$, $theta^((j)} tilde q$ MC approx of posterior predictive
 ]
 
 #cbox(title: [Uncertainty Decomp])[
   *Total Var*=*Aleatoric*+*Epistemic*
-  Aleatoric(data noise): $1/m sum_j sigma^2(x_*,theta^((j)))$
-  Epistemic(model uncertainty): $1/m sum_j(mu(x_*, theta^((j)))-bar(mu))^2$
-  where $bar(mu)=1/m sum_j mu(x_*, theta^((j)))$
+  Aleatoric(data noise): $1/m sum_j sigma^2(x^*,theta^((j)))$
+  Epistemic(model uncertainty): $1/m sum_j [mu(x^*, theta^((j)))-macron(mu)]^2$
+  where $macron(mu)=1/m sum_j mu(x^*, theta^((j)))$
 ]
 
 #cbox(title: [MC Dropout])[
-  $q_j(theta_j)=p delta_0(theta_j)+(1-p)delta_(lambda_j)(theta_j)$
-  Test时keep dropout→multiple forward passes→uncertainty
+  $q_j (theta_j)=p delta_0(theta_j)+(1-p)delta_(lambda_j)(theta_j)$
+  Test时keep dropout→多次 forward passes→uncertainty estimates
 ]
 
 #cbox(title: [SWAG])[
@@ -261,9 +255,9 @@
 #cbox(title: [Strategies])[
   *Uncertainty Sampling*: $x=arg max H[y_x|D]$
   Cannot distinguish aleatoric vs epistemic
-  *BALD*: $x=arg max I(theta;y_x|D)=H[y_x|D]-EE_theta[H[y_x|theta]]$
+  *BALD*: $x=arg max I(theta;y_x|D)=H[y_x|D]-EE_theta [H[y_x|theta]]$
   Finds where models *disagree* about $y_x$
-  *Hetero*: $x=arg max sigma^2_"epistemic"/sigma^2_"aleatoric"$
+  *Hetero*: $x=arg max {sigma^2_"epistemic"\/sigma^2_"aleatoric"}$
 ]
 
 #cbox(title: [Submodular])[
@@ -275,7 +269,7 @@
 
 #cbox(title: [Regret])[
   $R_T=sum_(t=1)^T (f^#opt -f(x_t))$
-  Goal: sublinear $R_T/T arrow 0$
+  Goal: sublinear $R_T\/T arrow 0$
 ]
 
 #cbox(title: [Acquisition Fncs])[
@@ -296,14 +290,14 @@
 = MDP & RL Foundations
 
 #cbox(title: [MDP])[
-  $(cal(S),cal(A),P,R,gamma)$: states, actions, $P(s'|s,a)$, reward, discount
+  $(cal(S),cal(A),P,R,gamma)$
   *Value*: $V^pi(s)=EE[sum_(t>=0)gamma^t R_t|s_0=s,pi]$
   *Q-fnc*: $Q^pi(s, a)=R(s,a)+gamma sum_(s')P(s'|s,a)V^pi(s')$
 ]
 
 #cbox(title: [Bellman Eqs])[
   *Expectation*: $V^pi(s)=R(s,pi(s))+gamma sum_(s')P(s'|s,pi(s))V^pi(s')$
-  *Optimality*: $V^#opt (s)=max_a[R(s,a)+gamma sum_(s')P(s'|s,a)V^#opt (s')]$
+  *Optimality*: $V^#opt (s)=max_a [R(s,a)+gamma sum_(s')P(s'|s,a)V^#opt (s')]$
   $Q^#opt (s,a)=R(s,a)+gamma sum_(s')P(s'|s,a)max_(a')Q^#opt (s',a')$
   *Matrix*: $bold(v)^pi=(bold(I)-gamma bold(P)^pi)^(-1)bold(r)^pi$
 ]
@@ -315,14 +309,15 @@
 
 #cbox(title: [PI & VI])[
   *Policy Iter*: (1)Eval $V^pi$ exactly(solve LSE), (2)$pi arrow$greedy. Fewer iters, $O(n^3)$/iter.
-  *Value Iter*: $V arrow max_a[r+gamma P V]$. More iters, $O(n^2 m)$/iter.
+  *Value Iter*: $V arrow max_a [r+gamma P V]$. More iters, $O(n^2 m)$/iter.
   Both converge to optimal; VI gives $epsilon$-optimal
 ]
 
 #cbox(title: [POMDP])[
-  *Belief*: $b_t(x)=P(X_t=x|y_(1:t),a_(1:t-1))$
-  *Bayes Filter*: $b_(t+1)(x) prop o(y_(t+1)|x)sum_(x')P(x|x',a_t)b_t(x')$
   Belief-state MDP: reward $rho(b, a)=EE_(x tilde b)[r(x,a)]$
+  *Belief*: $b_t (x)=P(X_t=x|y_(1:t),a_(1:t-1))$
+  *Bayes Filter*: $b_(t+1)(x) prop o(y_(t+1)|x)sum_(x')P(x|x',a_t)b_t (x')$
+  
 ]
 
 = Tabular RL
@@ -334,7 +329,7 @@
 
 #cbox(title: [Q-Learning (Off-policy)])[
   $Q(s,a) arrow.l Q(s,a)+alpha(r+gamma max_(a')Q(s',a')-Q(s,a))$
-  Uses $max$ (ideal best $a'$); off-policy
+  Uses $max$ (ideal best $a'$); off-policy, model-free
 ]
 
 #cbox(title: [SARSA (On-policy)])[
@@ -344,7 +339,7 @@
 
 #cbox(title: [TD Learning])[
   $V(s) arrow.l V(s)+alpha(r+gamma V(s')-V(s))$
-  *As SGD*: $ell=1/2(V(s)-(r+gamma V(s')))^2$
+  *As SGD*: $ell=1/2[V(s)-(r+gamma V(s'))]^2$
   Converges if Robbins-Monro: $sum alpha_t=infinity$, $sum alpha_t^2<infinity$
 ]
 
@@ -357,30 +352,31 @@
 = Deep RL
 
 #cbox(title: [DQN])[
-  $cal(L)=(r+gamma max_(a')Q_(theta^-)(s',a')-Q_theta(s, a))^2$
+  $cal(L)=(r+gamma max_(a')Q_(theta^-)(s',a')-Q_theta (s, a))^2$
   *Target Net* $theta^-$: stabilize; *Experience Replay*: break correlation
   *Double DQN*: selection $theta$, eval $theta^-$; reduces overestimation
 ]
 
 #cbox(title: [Policy Gradient])[
-  $nabla_theta J=EE_(tau tilde pi_theta)[sum_t nabla log pi_theta(a_t|s_t)G_t]$
+  $nabla_theta J=EE_(tau tilde pi_theta)[sum_t nabla log pi_theta (a_t|s_t)G_t]$
   $nabla log P(tau)=sum_t nabla log pi(a_t|s_t)$ (dynamics cancel!)
   *REINFORCE*: MC estimate, high variance
   *Baseline*: $G_t-b(s_t)$, $b=V(s)$ optimal; unbiased
 ]
 
 #cbox(title: [Actor-Critic])[
-  *Actor*: $pi_theta(a|s)$; *Critic*: $V_phi(s)$ or $Q_phi(s, a)$
+  *Actor*: $pi_theta (a|s)$; *Critic*: $V^phi (s)$ or $Q^phi (s, a)$
   $nabla J approx EE[nabla log pi(a|s)(Q(s,a)-V(s))]$
   Critic bootstrap减variance但引入bias
 ]
 
 #cbox(title: [Advanced])[
   *TRPO*: $max EE[(pi_theta/pi_"old")A^(pi_"old")]$ s.t. $"KL"<=delta$
-  *DDPG*: continuous actions, deterministic $mu_theta(s)$
+  *DDPG*: continuous actions, deterministic $mu_theta (s)$
   *Adv Fnc*: $A^pi(s, a)=Q^pi(s, a)-V^pi(s)$
 ]
 
+/* 非今年考点也
 = Bayesian Networks
 
 #cbox(title: [Def])[
@@ -412,6 +408,7 @@
   *Gibbs*: sample each var from conditional given rest
 ]
 
+
 #cbox(title: [Learning])[
   *Params*: $hat(theta)_(X_i|"Pa"_i)="count"(X_i,"Pa"_i)/"count"("Pa"_i)$ (MLE)
   *Structure*: Score-based, MLE score偏好fully connected
@@ -419,8 +416,6 @@
   *Chow-Liu*: max spanning tree on MI weights→optimal tree BN
 ]
 
-/*
-非今年考点也
 = Particle Filtering
 
 #cbox(title: [Algo])[
@@ -470,10 +465,10 @@
 ]
 
 #cbox(title: [Closed-Form Marginal ⭐])[
-  Define: $alpha_t=1-beta_t$, $bar(alpha)_t=product_(s=1)^t alpha_s$
-  $q(x_t|x_0)=cal(N)(sqrt(bar(alpha)_t)x_0,(1-bar(alpha)_t)I)$
-  *Reparam*: $x_t=sqrt(bar(alpha)_t)x_0+sqrt(1-bar(alpha)_t)epsilon$, $epsilon tilde cal(N)(0,I)$
-  As $t arrow T$: $bar(alpha)_T arrow 0$, $x_T tilde cal(N)(0,I)$ indep of $x_0$
+  Define: $alpha_t=1-beta_t$, $macron(alpha)_t=product_(s=1)^t alpha_s$
+  $q(x_t|x_0)=cal(N)(sqrt(macron(alpha)_t)x_0,(1-macron(alpha)_t)I)$
+  *Reparam*: $x_t=sqrt(macron(alpha)_t)x_0+sqrt(1-macron(alpha)_t)epsilon$, $epsilon tilde cal(N)(0,I)$
+  As $t arrow T$: $macron(alpha)_T arrow 0$, $x_T tilde cal(N)(0,I)$ indep of $x_0$
 ]
 
 #cbox(title: [Reverse Process])[
@@ -484,8 +479,8 @@
 
 #cbox(title: [Forward Posterior])[
   $q(x_(t-1)|x_t,x_0)=cal(N)(tilde(mu)_t,tilde(beta)_t I)$
-  $tilde(mu)_t=(sqrt(bar(alpha)_(t-1))beta_t)/(1-bar(alpha)_t)x_0+(sqrt(alpha_t)(1-bar(alpha)_(t-1)))/(1-bar(alpha)_t)x_t$
-  $tilde(beta)_t=((1-bar(alpha)_(t-1))beta_t)/(1-bar(alpha)_t)$
+  $tilde(mu)_t=(sqrt(macron(alpha)_(t-1))beta_t)/(1-macron(alpha)_t)x_0+(sqrt(alpha_t)(1-macron(alpha)_(t-1)))/(1-macron(alpha)_t)x_t$
+  $tilde(beta)_t=((1-macron(alpha)_(t-1))beta_t)/(1-macron(alpha)_t)$
   Key: given $x_0,x_t$, forward posterior is Gaussian (tractable)
 ]
 
@@ -496,25 +491,25 @@
 
 #cbox(title: [⭐Noise Prediction ])[
   Predict $epsilon$ instead of $mu$ (more stable):
-  From $x_t=sqrt(bar(alpha)_t)x_0+sqrt(1-bar(alpha)_t)epsilon$:
-  $tilde(mu)_t=1/sqrt(alpha_t)(x_t-(beta_t)/sqrt(1-bar(alpha)_t)epsilon)$
+  From $x_t=sqrt(macron(alpha)_t)x_0+sqrt(1-macron(alpha)_t)epsilon$:
+  $tilde(mu)_t=1/sqrt(alpha_t)(x_t-(beta_t)/sqrt(1-macron(alpha)_t)epsilon)$
   *Simple Loss*: $L_"simple"=EE_(t,x_0,epsilon)[||epsilon-epsilon_lambda(x_t, t)||^2]$
 ]
 
 #cbox(title: [Training Algo])[
   Repeat: sample $x_0 tilde p_"data"$, $t tilde "Unif"{1,...,T}$, $epsilon tilde cal(N)(0,I)$
-  $x_t=sqrt(bar(alpha)_t)x_0+sqrt(1-bar(alpha)_t)epsilon$
+  $x_t=sqrt(macron(alpha)_t)x_0+sqrt(1-macron(alpha)_t)epsilon$
   $nabla_lambda||epsilon-epsilon_lambda(x_t, t)||^2$
 ]
 
 #cbox(title: [Sampling Algo])[
   $x_T tilde cal(N)(0,I)$
   For $t=T,...,1$: $z tilde cal(N)(0,I)$ if $t>1$ else $z=0$
-  $x_(t-1)=1/sqrt(alpha_t)(x_t-(beta_t)/sqrt(1-bar(alpha)_t)epsilon_lambda(x_t, t))+sigma_t z$
+  $x_(t-1)=1/sqrt(alpha_t)(x_t-(beta_t)/sqrt(1-macron(alpha)_t)epsilon_lambda(x_t, t))+sigma_t z$
 ]
 
 #cbox(title: [Connection])[
-  $epsilon_lambda(x_t, t) approx -sqrt(1-bar(alpha)_t)nabla_(x_t)log q(x_t)$
+  $epsilon_lambda(x_t, t) approx -sqrt(1-macron(alpha)_t)nabla_(x_t)log q(x_t)$
   *Denoising = Score matching*
 ]
 
