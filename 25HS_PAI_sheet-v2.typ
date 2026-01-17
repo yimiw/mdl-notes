@@ -23,13 +23,13 @@
 #block(stroke: 0pt + black, inset: 3pt, width: 100%)[
   #set text(size: 7pt) //6pt
   = Dict
-  *BALD*:Bayesian Active Learning by Disagreement; *BLR*:Bayesian Linear Reg; *BN*:Bayesian Network; *BNN*:Bayesian NN; *BO*:Bayesian Opt; *BP*:Belief Propagation; *CPD*:Cond Prob Dist; *DAG*:Directed Acyclic Graph; *DBE*:Detailed Balance Eq; *DDIM*:Denoising Diffusion Implicit Models; *DDPG*:Deep Deterministic PG; *DDPM*:Denoising Diffusion Prob Models; *DQN*:Deep Q-Net; *ECE*:Expected Calibration Error; *EI*:Expected Improvement; *ELBO*:Evidence Lower Bound; *GP*:Gaussian Process; *HMM*:Hidden Markov Model; *KF*:Kalman Filter; *KL*:Kullback-Leibler; *LDM*:Latent Diffusion; *LOTV*:Law of Total Var; *MALA*:Metropolis-Adjusted Langevin; *MAP*:Max A Posteriori; *MCMC*:Markov Chain MC; *MDP*:Markov Decision Process; *MH*:Metropolis-Hastings; *MI*:Mutual Info; *MLE*:Max Likelihood Est; *MPE*:Most Probable Explanation; *PF*:Particle Filter; *PI*:Prob of Improvement; *POMDP*:Partially Observable MDP; *RBF*:Radial Basis Fnc; *RFF*:Random Fourier Features; *SGLD*:Stoch Grad Langevin Dyn; *SWAG*:Stoch Weight Avg Gaussian; *TD*:Temporal Diff; *UCB*:Upper Confidence Bound; *VE*:Var Elimination; *VI*:Variational Inference;
-  $k_(X X'):= k(X,X')$; $K_y:=K_(X X)+sigma_n^2 I$
+  *BALD*:Bayesian Active Learning by Disagreement; *BLR*:Bayesian Linear Reg; *BN*:Bayesian Network; *BNN*:Bayesian NN; *BO*:Bayesian Opt; *BP*:Belief Propagation; *CPD*:Cond Prob Dist; *DAG*:Directed Acyclic Graph; *DBE*:Detailed Balance Eq; *DDIM*:Denoising Diffusion Implicit Models; *DDPG*:Deep Deterministic PG; *DDPM*:Denoising Diffusion Prob Models; *DQN*:Deep Q-Net; *ECE*:Expected Calibration Error; *EI*:Expected Improvement; *ELBO*:Evidence Lower Bound; *GP*:Gaussian Process; GPR: GP Regression; *HMM*:Hidden Markov Model; *KF*:Kalman Filter; *KL*:Kullback-Leibler; *LDM*:Latent Diffusion; *LOTV*:Law of Total Var; *MALA*:Metropolis-Adjusted Langevin; *MAP*:Max A Posteriori; *MCMC*:Markov Chain MC; *MDP*:Markov Decision Process; *MH*:Metropolis-Hastings; *MI*:Mutual Info; *MLE*:Max Likelihood Est; *MPE*:Most Probable Explanation; *PF*:Particle Filter; *PI*:Prob of Improvement; *POMDP*:Partially Observable MDP; *RBF*:Radial Basis Fnc; *RFF*:Random Fourier Features; *SGLD*:Stoch Grad Langevin Dyn; *SWAG*:Stoch Weight Avg Gaussian; *TD*:Temporal Diff; *UCB*:Upper Confidence Bound; *VE*:Var Elimination; *VI*:Variational Inference;
   //1/√2:0.707; √2:1.414; √3:1.732; ln2:0.693; ln3:1.099; 1/e:0.368; $e$:2.718; $(1-1/e)$:0.632
 ]
 #let EE = $bb(E)$
 #let PP = $bb(P)$
 #let VV = $bb(V)$
+
 #let opt = text([$*$], fill: red)
 // ==============================
 
@@ -42,8 +42,8 @@
   *Cond Indep*: $X perp Y|Z arrow.l.r PP(X, Y|Z)=PP(X|Z)PP(Y|Z)$
 ]
 
-#cbox(title: [Gaussian $cal(N)(mu,Sigma)$])[
-  $cal(N)(x;mu,Sigma)=1/sqrt((2pi)^d det(Sigma))exp(-1/2(x-mu)^top Sigma^(-1)(x-mu))$
+#cbox(title: [Gaussian])[ 
+  $cal(N)(x;mu,Sigma)= exp(-1/2(x-mu)^top Sigma^(-1)(x-mu))/sqrt((2pi)^d |Sigma|)$
   *Marginal*: $X_A tilde cal(N)(mu_A, Sigma_(A A))$
   *Conditional*: $X_A|X_B tilde cal(N)(mu_(A|B), Sigma_(A|B))$
   $mu_(A|B)=mu_A+Sigma_(A B)Sigma_(B B)^(-1)(x_B-mu_B)$
@@ -52,28 +52,26 @@
   *Sum*: indep $X+X' tilde cal(N)(mu+mu', Sigma+Sigma')$
 ]
 
-#cbox(title: [$EE$, Var, Cov])[
+#cbox(title: [$EE$, Var, Cov, Info])[
   $EE[A X+b]=A EE[X]+b$; *Tower*: $EE_Y [EE_X [X|Y]]=EE[X]$
   $"Var"[X]=EE[(X-EE[X])^2]$; $"Cov"[X,Y]=EE[X Y]-EE[X]EE[Y]$
   $"Var"[X+Y]="Var"[X]+"Var"[Y]+2"Cov"[X,Y]$
   *LOTV*: $"Var"[X]=EE["Var"[X|Y]]+"Var"[EE[X|Y]]$
-]
 
-#cbox(title: [Info Theory])[
   *Entropy*: $H[p]=-EE_p [log p(x)]$; Gauss $H=1/2 log((2pi e)^d det Sigma)$
   *KL*: $"KL"(p||q)=EE_p [log p/q]>=0$; need $"supp"(q) subset.eq "supp"(p)$
   *Forward* $"KL"(p||q)$: mean-seeking覆盖; *Reverse* $"KL"(q||p)$: mode-seeking过confident
   *MI*: $I(X;Y)=H[X]-H[X|Y]=H[Y]-H[Y|X]>=0$, symmetric
+
   *Cond MI*: $I(X;Y|Z)=H[X|Z]-H[X|Y,Z]$
   *Gauss MI*: $I[X;Y]=1/2 log det(I+sigma_n^(-2)Sigma)$ for $Y=X+epsilon$
-
-  *MLE*: $hat(theta)_"MLE"=arg max_theta sum_i log p(y_i|x_i,theta)$
-
-  *MAP*: $hat(theta)_"MAP"=arg min_theta underbrace(-log p(theta), "reg")+underbrace(ell_"nll", "fit")$
   Gaussian prior→L2; Laplace prior→L1
+  *MLE*: $hat(theta)_"MLE"=arg max_theta sum_i log p(y_i|x_i,theta)$
+  *MAP*: $hat(theta)_"MAP"=arg min_theta underbrace(-log p(theta), "reg")+underbrace(ell_"nll", "fit")$ 
 ]
 
-= Bayesian Linear Regression
+= BLR:= GP with Linear核
+$k(x,x')=x^top x'$
 
 #cbox(title: [Model])[
   $y=w^top x+epsilon$, $epsilon tilde cal(N)(0,sigma_n^2)$; *Prior*: $w tilde cal(N)(0,sigma_p^2 I)$, $L_2$正则/weight decay; *Posterior*:   $w|X,y tilde cal(N)(mu,Sigma)$ where 
@@ -90,22 +88,27 @@
 = Gaussian Processes
 
 #cbox(title: [Def])[
-  $f tilde cal(G P)(mu,k)$: any finite subset jointly Gaussian.
-  $f_A tilde cal(N)(mu_A, K_(A A))$, $[K_(A A)]_(i j)=k(x_i,x_j)$
+  $y_i = f(x_i) + epsilon_i$, noise $epsilon_i tilde cal(N)(0, sigma_n^2)$.
+  *Prior*: $f tilde cal(G P)(mu(x), k(x, x'))$.
+  Finite set $A={x_1, ..., x_m}$, the vector $f(A)$多维Gaussian, $f(X) tilde cal(N)(mu(A), K_(A A))$, $[K_(A A)]_(i j)=k(x_i,x_j) in RR^(m times m)$.
+$k(x_i, x_i)$:each points自由度/方差; $k(x_i, x_j)$ points间通信/耦合强度.
 ]
 
-#cbox(title: [GP Regression])[
-  $y tilde cal(N)(0,K_(X X)+sigma_n^2 I)=cal(N)(0,K_y)$
-  *Mean*: $mu^*(x)=k(x,X)K_y^(-1)y$
-  *Cov*: $k^*(x,x')=k(x,x')-k(x,X)K_y^(-1)k(X,x')$
+#cbox(title: [GPR])[ set $A={x_1, ..., x_m}$, 
+  $y tilde cal(N)(0,K_(A A)+sigma_n^2 I)=cal(N)(0,K_y)$
+  *Mean*: $mu^*(x)= mu(x) + k(x,A)K_y^(-1)(y_A -mu_A)$
+  *Cov*: $k^*(x,x')=k(x,x')-k(x,A)K_y^(-1)k(A,x')$
   *Predictive*: $y^* tilde cal(N)(mu^*, k^*(x,x') +sigma_n^2)$
 ]
 
 #cbox(title: [Kernels])[
   *Linear*: $k(x,x')=x^top x'+sigma_0^2$
   *RBF*: $k=exp((-||x-x'||^2) /(2ell^2))$ smooth无限可微
+  *Laplace*: $k = exp(-r / ell)$ Rough, sharp peaks, $C^0$ cont
+  *Cosine*: $k = cos(2 pi r / p)$ (Periodic, no decay)
   *Exponential*: $k=exp(-||x-x'||\/ell)$ rough
   *Matérn*: $nu=0.5$→Exp, $nu arrow infinity$→RBF, $nu$控制smoothness
+  *HyperParam* :$ell$ length-scale, x-axis wiggle speed; $sigma_f^2$ (amplitude, y-axis scale).
   *Periodic*: $k=sigma^2 exp(-2/ell^2 sin^2((pi|x-x'|)/p))$
   *Closure*: $k_1+k_2$, $k_1 dot k_2$, $c dot k$, $exp(k)$仍valid kernel
   *Stationary*: $k(x,x')=k(x-x')$; *Isotropic*: $k=k(||x-x'||)$
@@ -119,41 +122,57 @@
 #cbox(title: [Approx $O(n^3)$ → lower])[
   *RFF*: $k(x-x')approx phi(x)^top phi(x')$, $O(n m^2+m^3)$
   Bochner: stationary kernel ↔ Fourier of non-neg measure
-  *Inducing Pts*: subset $m<<n$ points for approx
+  *Inducing Pts*: subset $m<<n$ points for approx, $O(N bold(M)^2)$( LoRA)
 ]
 
-= Variational Inference
+= Variational Inference, ELBO
 
-#cbox(title: [Goal])[
-  Approx $p(theta|D)$ with $q(theta|lambda)$ by min $"KL"(q||p)$
+#cbox(title: [Motiv])[
+  考虑$ p(y^*|x^*, D) = ∫ p(y^*|w)p(w|D)d w$ 不同approx处理intractable积分方式不同: Laplace(峰值) $p(w|D) approx cal(N)(w_"MAP", -H^(-1))$1次Hessian且可微; VI `min` ELBO, 用$q(dot)$近似$Z$; MC直接sample $w_s approx p(w|D)$ unbiasd地估
+  
+  近似$p(theta|D)$ with $q(theta|lambda)$ by min $"KL"(q||p)$, $q(dot)$是自定义的approx分布.
+  注意识别$log(p(y))$对于$EE_q(theta)$无关, $EE_q [log p(y)] =log p(y)$为const.
+  Recall Bayese $p(Z)p(X|Z) = p(X) p(Z|X)$化简ELBO时.
 ]
 
 #cbox(title: [ELBO])[
   $cal(L)=EE_q [log p(y|theta)]-"KL"(q(theta)||p(theta))$
-  且$log p(y)=cal(L)+"KL"(q||p(dot|D))>=cal(L)$
-  Max ELBO ⇔ Min KL to posterior
+  且$underbrace(log p(y), "Evidence") = cal(L) + underbrace("KL"(q||p(theta|y)), "Error" >= 0) 
+$.
+  Max ELBO ⇔ Min KL to posterior 
   *Derivation*: Jensen: $log EE_q [p/q]>=EE_q [log p/q]$
+  $arrow.double arg max_q cal(L) equiv arg min_q "KL"(q||p(theta|y)) equiv arg min_q EE_q [log q(theta) - log p(y, theta)]$
 
   *KL of Gaussian*
-  $"KL"(cal(N)_p||cal(N)_q)=1/2[tr(Sigma_q^(-1)Sigma_p)+(mu_p-mu_q)^top Sigma_q^(-1)(mu_p-mu_q)-d+log det(Sigma_q ^(-1) -  Sigma_p)]$
+  $"KL"(cal(N)_p||cal(N)_q)=1/2[tr(Sigma_q^(-1)Sigma_p)+(mu_p-mu_q)^top Sigma_q^(-1)(mu_p-mu_q)-d+log (det|Sigma_q|) /(det|Sigma_p|))]$
+  $Sigma_q^(-1)$: precision矩阵, trace项算匹配程度(linear), $log det$算熵差异(log). 
 
   $"KL"(cal(N)_p||cal(N)_q)= 1/2 [ (mu_p - mu_q)^2/(sigma_q^2) + sigma_p^2 / sigma_q^2 -1 - log sigma_p^2 / sigma_q^2 ]$ 1dim时.
   *Product*: $"KL"(Q_X Q_Y||P_X P_Y)="KL"(Q_X||P_X)+"KL"(Q_Y||P_Y)$
 ]
 
 #cbox(title: [Reparam Trick])[
-  $theta=g(epsilon;lambda)$, $epsilon tilde phi$
-  $EE_(theta tilde q)[f(theta)]=EE_epsilon [f(g(epsilon;lambda))]$
-  *Gaussian*: $theta=mu+sigma dot.circle epsilon$, $epsilon tilde cal(N)(0,I)$
-  Enable gradient: $nabla_lambda EE_q [f]=EE_phi [nabla_lambda f(g(epsilon;lambda))]$
+  *Formula*: $theta=g(epsilon;lambda)$, $epsilon tilde p(epsilon)$ (Indep of $lambda$)
+  $EE_(q_lambda)[f(theta)] = EE_p [f(g(epsilon;lambda))]$
+  $nabla_lambda cal(L) approx 1/L sum nabla_lambda f(g(epsilon;lambda))$
+  e.g. *Gaussian*: $z = mu + sigma dot.circle epsilon$, $epsilon tilde cal(N)(0,I)$
+  
+  *property*: 需Continuous(differentiable)变量(`Auto-diff`), *unbiased*, low-variance;对比`REINFORCE`之$EE[f(theta nabla_lambda log q(theta))]$, 虽然都是$nabla$的*unbiased* estimate, 但后者连续/离散variable均适用, 高方差用baseline来降.
 ]
+//Gumbel-Softmax (Concrete Distribution)是biased, low variance的
+//Straight-Through Estimator (STE)也是
 
-#cbox(title: [Laplace Approx])[
+
+#cbox(title: [Laplace Approx])[ motiv: 用二次fit $log p(x)$, 适用unimodal(not multimodal).
   $q(theta)=cal(N)(hat(theta),Lambda^(-1))$
   $hat(theta)="MAP"$; $Lambda=-nabla^2 log p(hat(theta)|D)$ (Hessian)
   Good at mode, overconfident elsewhere
+  考虑Gaussian就是unimode, 二次型log-density, LaplaceApprox能精确recover之
+
+  $log P(Z|X) = nabla hat(P) (X, Z) - nabla log Z$而$nabla log Z=0$, 找mode无需$Z$.
 ]
 
+/* 非今年考点也
 = Markov Chains & MCMC
 
 #cbox(title: [MC basics])[
@@ -199,7 +218,7 @@
   $p(x)=1/Z exp(-f(x))$, $f$=energy function
   Posterior always interpretable as Gibbs
 ]
-
+*/
 = Bayesian Neural Networks
 
 #cbox(title: [Model])[
@@ -222,8 +241,16 @@
   $p(y^*|x^*,D)approx 1/m sum_(j=1)^m p(y^*|x^*,theta^((j)))$, $theta^((j)} tilde q$ MC approx of posterior predictive
 ]
 
-#cbox(title: [Uncertainty Decomp])[
-  *Total Var*=*Aleatoric*+*Epistemic*
+#cbox(title: [Aleatoric vs Epistemic])[
+  $sigma_"total" = sigma_e + sigma_a <=> "Var"(y) = "Var"(EE[y|theta]) + EE["Var"(y|theta)]$ "Var of Means"+"Mean of Vars"也
+  解析解:
+  如*BLR*中param后验, 
+  $sigma_("epi")^2 =x^*^top Sigma_("post") x^*$
+  如*GPR*中param后验, 
+  $sigma_("epi")^2 =k_*(x^*,x^*)$; 
+  $sigma_("ale")^2= sigma_n^2$ (constant noise)
+  
+  近似解:(MC/Ensemble, $m$此sampling), $theta_j$: 某近似posterior.
   Aleatoric(data noise): $1/m sum_j sigma^2(x^*,theta^((j)))$
   Epistemic(model uncertainty): $1/m sum_j [mu(x^*, theta^((j)))-macron(mu)]^2$
   where $macron(mu)=1/m sum_j mu(x^*, theta^((j)))$
@@ -287,13 +314,53 @@
   Matérn($nu>1/2$): $gamma_T=O(T^(d/(2nu+d))(log T)^(2nu/(2nu+d)))$
 ]
 
-= MDP & RL Foundations
+= MDP & Bellman & Hoeffding 不等式 & Concentration
 
 #cbox(title: [MDP])[
-  $(cal(S),cal(A),P,R,gamma)$
-  *Value*: $V^pi(s)=EE[sum_(t>=0)gamma^t R_t|s_0=s,pi]$
-  *Q-fnc*: $Q^pi(s, a)=R(s,a)+gamma sum_(s')P(s'|s,a)V^pi(s')$
+$(cal(S), cal(A), P, R, gamma)$: states, actions, $P_(s a)(s')$, reward $R(s,a)$ or $R(s)$, discount $gamma in [0,1)$. Policy $pi: cal(S)->cal(A)$.
+
+*Value fnc*: $V^pi (s) = EE[sum_(t>=0) gamma^t R(s_t) | s_0=s, pi]= R(s) + gamma sum_(s' in S) P_(s,pi(s))(s') V^pi (s')$ (follow $pi$)
+
+*Q-fnc*: $Q^pi (s,a) = R(s,a) + gamma sum_(s') P_(s a)(s') V^pi (s')= sum_(s') P_(s a)(s')[R(s,a,s') + gamma sum_(a') pi(a'|s') Q^pi (s',a')]$
 ]
+
+#cbox(title: [BOE])[
+$V^#opt (s) = R(s) + max_a gamma sum_(s') P_(s a)(s') V^#opt (s')$
+
+$Q^#opt (s,a) = R(s,a) + gamma sum_(s') P_(s a)(s') max_(a') Q^#opt (s',a')$
+
+*Bellman期望Eq*: $V^pi (s_t) = EE_pi [ r_(t) + gamma V^pi (s_(t+1))] =$
+
+$sum_a pi(a|s) sum_(s') P_(s a)(s')[R(s,a,s') + gamma V^pi(s')] $
+
+Q-fnc版: $V^pi(s) = sum_a pi(a|s) Q^pi(s,a)$, 则:
+
+$Q^pi (s,a) = EE[ R_t + gamma sum_a' pi(a' | s_(t+1)) Q^pi (s_(t+1),a')]$
+
+*Optimal* policy: $pi^#opt (s) = arg max_a sum_(s') P_(s a)(s') V^#opt (s')$
+Policy opt $arrow.l.r.double$ greedy w.r.t. $V^pi$. Bellman op $gamma$-contraction in $ell_infinity$.
+*Matrix*: $bold(v)^pi = (bold(I) - gamma bold(T)^pi)^(-1) bold(r)^pi$ ($O(n^3)$)
+]
+
+#cbox(title: [Horizon])[
+*Infinite* ($gamma < 1$): $V = sum_(t=0)^infinity gamma^t r_t$ converges.
+*Finite* ($H$ steps): $V = sum_(t=0)^(H-1) gamma^t r_t$. 
+Even $gamma=1$ converges(finite sum).Conversion: $H approx 1/(1-gamma)$.
+]
+
+#cbox(title: [Horizon Bound])[
+  $X_i in [a,b]$ i.i.d: $PP(|hat(X) - EE [X]| >= epsilon) <= 2 exp(-2n epsilon^2 / (b-a)^2)$
+;say$R in [0,1]$: CI ($1-delta$) $arrow |hat(mu)-mu| <= sqrt(ln(2/delta)/(2n))$
+;*UCB bonus*: 不确定性$sqrt(ln(1/delta)/(2n))$; set $delta_t=1/t^2 arrow sqrt((2 ln t)/n)$;
+Hoeffding bound只适用*iid* data, MCMC samples有自相关性thus不适用;
+]
+
+= MDP & RL Foundations
+// #cbox(title: [MDP])[
+//   $(cal(S),cal(A),P,R,gamma)$
+//   *Value*: $V^pi(s)=EE[sum_(t>=0)gamma^t R_t|s_0=s,pi]$
+//   *Q-fnc*: $Q^pi(s, a)=R(s,a)+gamma sum_(s')P(s'|s,a)V^pi(s')$
+// ]
 
 #cbox(title: [Bellman Eqs])[
   *Expectation*: $V^pi(s)=R(s,pi(s))+gamma sum_(s')P(s'|s,pi(s))V^pi(s')$
@@ -449,6 +516,56 @@
   KF = closed-form Bayesian filter for linear Gaussian
 ]
 */
+
+
+
+// == Discounted Visitation Frequency
+
+// #cbox(title: [$d^pi (s)$])[
+// $d^pi (s) = (1-gamma) sum_(t=0)^infinity gamma^t Pr(s_t=s | pi, mu)$
+// *Solution*: $d^pi = mu (I - gamma P_pi)^(-1)$
+// *Recursive*: $d^pi = mu + gamma d^pi P_pi$ where $[P_pi]_(s',s) = sum_a pi(a|s') P(s|s',a)$
+// *解读*: Discounted state visitation distribution under $pi$. If $mu(s_1)=1$: $d^pi$ is from fixed $s_1$.
+// ]
+
+#cbox(title: [Performance Diff Lemma(Episodic)])[
+$V^(pi') (s_0) - V^pi (s_0) = limits(sum)_(t=0)^(H-1) EE_(s ~ d_t^(pi'), a ~ pi') [Q_t^pi (s,a) - V_t^pi (s)]= limits(sum)_(t=0)^(H-1) EE_(s ~ d_t^(pi'), a ~ pi') [A_t^pi (s,a)]$
+]
+
+= Policy $nabla$ Theory, PG Thrm & Estimators
+
+#cbox(title: [Trajectory])[$nabla_theta log P(tau|theta) = sum_(t=1)^H nabla_theta log pi_theta (a_t|s_t)$ Gradent
+Environment dynamics $P(s'|s,a)$ and $mu(s_1)$ cancel out!
+*Trajectory*: $tau = (s_1, a_1, s_2, a_2, ..., s_H, a_H), P(tau) = mu(s_0) product_(t=0)^(T-1) pi(a_t|s_t) P(s_(t+1)|s_t, a_t)$
+*Log*: $log P(tau|theta) = log mu(s_1) + sum_(t=1)^H log pi_theta (a_t|s_t) + sum_(t=1)^H log P(s_(t+1)|s_t,a_t)$
+]
+
+#cbox(title: [PG Thrm])[
+$nabla_theta J(theta) = EE_(tau ~ pi_theta) [sum_(t=0)^T nabla_theta log pi_theta (a_t|s_t) dot G_t]$
+where $G_(t:H) = sum_(t'=t)^H gamma^(t'-t) r_(t')$ (return/reward-to-go),or写成$R(tau)$. $nabla$增加$a_t$的prob,降others. 还可rewrite原始PG Thrm as, recall $Q^pi(s_t, a_t) = EE_(tau~ pi)[G_(t:H)|s_t,a_t]$, $EE_(tau ~ pi_theta) [sum_(t=0)^infinity gamma^t nabla_theta log pi_theta (a_t|s_t) (Q_theta (s_t, a_t) - bold(0)) ]$
+
+*REINFORCE*: MC estimate of $G_t$, high variance. 采样$m$轨迹$tau_i$ from $pi_(theta_k)$, 算unbiased $nabla$ 估计后update $pi_(theta_k)+= alpha_k hat(nabla_theta) J$ 
+$hat(nabla_theta) J = 1/m sum_(i=1)^m (sum_(t=1)^H gamma^t R_(i,t)) (sum_(t=1)^H nabla_theta log pi_(theta_k))(a_(i,t)|s_(i,t))$
+良$tau_i$充当MLE in SupvL, 需多samples, 没用Mrkv性.
+
+*Actor-Critic*: Replace $G_t$ with $Q^pi$ or $A^pi$ estimated by critic. 
+Actor: via $nabla_theta log pi_theta A_t$ update $pi_theta$; Critic: learn $hat(V)_omega (s_t)"or" hat(A)_omega (s_t,a_t)$ to Approx baseline.
+$nabla_theta J(theta) approx sum_t nabla_theta log pi_theta (dot|dot)(r_t + gamma hat(V)_omega (s_(t+1)) - hat(V)_omega (s_t))$, biased若$hat(V)_phi ^(pi)$不准.
+$nabla_theta J(theta) approx 1/N sum_t nabla_theta log pi_theta (dot|dot)
+[r(s_(i,t), a_(i,t)) + gamma hat(V)_phi ^(pi) (s_(i, t+1) - hat(V)_phi ^(pi) (s_(i, t)]$. 低方差, critic近似long-term return.
+
+*Softmax $nabla$*: $pi_theta (a|s) = (e^(beta Q_theta (s,a))) \/ (sum_b e^(beta Q_theta (s,b)))$
+policy表达式, $"Softmax" nabla log pi$: $nabla_theta log pi_theta (a|s) $
+$= beta (nabla_theta Q_theta (s,a) - sum_b pi_theta (b|s) nabla_theta Q_theta (s,b))$
+$= beta (nabla_theta Q_theta (s,a) - EE_(b ~ pi) [nabla_theta Q_theta (s,b)])$ 后者as baseline
+]
+
+#cbox(title: [Baseline Unbiasedness])[
+For any $b(s)$ depending only on state (not action). $therefore$ State-dependent baseline _never_ introduces bias:
+$EE_(a ~ pi(dot|s)) [b(s) nabla_theta log pi_theta (a|s)] = b(s) nabla_theta sum_a pi_theta (a|s) = b(s) dot 0 = 0$
+*With baseline*: $nabla_theta J = EE[sum_t nabla log pi (G_t - b(s_t))]$
+Optimal baseline: $b^#opt (s) = V^pi (s)$ (minimizes $sigma^2$, if $nabla$roughly const)
+]
 
 = Diffusion Models
 

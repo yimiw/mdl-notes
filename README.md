@@ -1,6 +1,5 @@
 # A. notes-mdl
 
-Personal study notes and templates for Machine Learning courses.
 
 ## 1. Contents
 
