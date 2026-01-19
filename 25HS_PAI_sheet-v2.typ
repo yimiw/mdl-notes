@@ -24,7 +24,7 @@
   #set text(size: 7pt) //6pt
   = Dict
   *BALD*:Bayesian Active Learning by Disagreement; *BLR*:Bayesian Linear Reg; *BNN*:Bayesian NN; *BO*:Bayesian Opt; *CPD*:Cond Prob Dist; *DDIM*:Denoising Diffusion Implicit Models; *DDPG*:Deep Deterministic PG; *DDPM*:Denoising Diffusion Prob Models; *DQN*:Deep Q-Net; *ECE*:Expected Calibration Error; *EI*:Expected Improvement; *ELBO*:Evidence Lower Bound; GPR: GP Regression; *LDM*:Latent Diffusion; *LOTV*:Law of Total Var; *MALA*:Metropolis-Adjusted Langevin; *MAP*:Max A Posteriori; *MI*:Mutual Info; *MLE*:Max Likelihood Est; *MPE*:Most Probable Explanation; *PI*:Prob of Improvement; *POMDP*:Partially Observable MDP; *RBF*:Radial Basis Fnc; *RFF*:Random Fourier Features; SNR: SignalNoiseRator; *SWAG*:Stoch Weight Avg Gaussian; *TD*:Temporal Diff; *UCB*:Upper Confidence Bound; *VE*:Var Elimination; *VI*:Variational Inference;
-  //1/√2:0.707; √2:1.414; √3:1.732; ln2:0.693; ln3:1.099; 1/e:0.368; $e$:2.718; $(1-1/e)$:0.632
+  1/√2:0.707; √2:1.414; √3:1.732; ln2:0.693; ln3:1.099; 1/e:0.368; $e$:2.718; $(1-1/e)$:0.632
 ]
 #let EE = $bb(E)$
 #let PP = $bb(P)$
