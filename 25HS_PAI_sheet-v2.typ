@@ -23,7 +23,7 @@
 #block(stroke: 0pt + black, inset: 3pt, width: 100%)[
   #set text(size: 7pt) //6pt
   = Dict
-  *BALD*:Bayesian Active Learning by Disagreement; *BLR*:Bayesian Linear Reg; *BNN*:Bayesian NN; *BO*:Bayesian Opt; *BP*:Belief Propagation; *CPD*:Cond Prob Dist; *DAG*:Directed Acyclic Graph; *DBE*:Detailed Balance Eq; *DDIM*:Denoising Diffusion Implicit Models; *DDPG*:Deep Deterministic PG; *DDPM*:Denoising Diffusion Prob Models; *DQN*:Deep Q-Net; *ECE*:Expected Calibration Error; *EI*:Expected Improvement; *ELBO*:Evidence Lower Bound; *GP*:Gaussian Process; GPR: GP Regression; *LDM*:Latent Diffusion; *LOTV*:Law of Total Var; *MALA*:Metropolis-Adjusted Langevin; *MAP*:Max A Posteriori; *MCMC*:Markov Chain MC; *MDP*:Markov Decision Process; *MI*:Mutual Info; *MLE*:Max Likelihood Est; *MPE*:Most Probable Explanation; *PF*:Particle Filter; *PI*:Prob of Improvement; *POMDP*:Partially Observable MDP; *RBF*:Radial Basis Fnc; *RFF*:Random Fourier Features; *SWAG*:Stoch Weight Avg Gaussian; *TD*:Temporal Diff; *UCB*:Upper Confidence Bound; *VE*:Var Elimination; *VI*:Variational Inference;
+  *BALD*:Bayesian Active Learning by Disagreement; *BLR*:Bayesian Linear Reg; *BNN*:Bayesian NN; *BO*:Bayesian Opt; *CPD*:Cond Prob Dist; *DDIM*:Denoising Diffusion Implicit Models; *DDPG*:Deep Deterministic PG; *DDPM*:Denoising Diffusion Prob Models; *DQN*:Deep Q-Net; *ECE*:Expected Calibration Error; *EI*:Expected Improvement; *ELBO*:Evidence Lower Bound; GPR: GP Regression; *LDM*:Latent Diffusion; *LOTV*:Law of Total Var; *MALA*:Metropolis-Adjusted Langevin; *MAP*:Max A Posteriori; *MI*:Mutual Info; *MLE*:Max Likelihood Est; *MPE*:Most Probable Explanation; *PI*:Prob of Improvement; *POMDP*:Partially Observable MDP; *RBF*:Radial Basis Fnc; *RFF*:Random Fourier Features; SNR: SignalNoiseRator; *SWAG*:Stoch Weight Avg Gaussian; *TD*:Temporal Diff; *UCB*:Upper Confidence Bound; *VE*:Var Elimination; *VI*:Variational Inference;
   //1/√2:0.707; √2:1.414; √3:1.732; ln2:0.693; ln3:1.099; 1/e:0.368; $e$:2.718; $(1-1/e)$:0.632
 ]
 #let EE = $bb(E)$
@@ -80,7 +80,7 @@ $k(x,x')=x^top x'$
 ]
 
 #cbox(title: [Prediction])[
-  $y^*|x^*,X,y tilde cal(N)(x^*^top mu, x^*^top Sigma x^*+sigma_n^2)$
+  $y_*|x_*,X,y tilde cal(N)(x_*^top mu, x_*^top Sigma x_*+sigma_n^2)$
   $mu$⇔`RidgeReg`解(=`MAP`解), $Sigma$则对应其Hessian的逆.
   `MAP`=Ridge with $lambda=sigma_n^2/sigma_p^2$; Online update: $O(n d^2)$
 ]
@@ -94,15 +94,16 @@ $k(x,x')=x^top x'$
 $k(x_i, x_i)$:each points自由度/方差; $k(x_i, x_j)$ points间通信/耦合强度.
 ]
 
-#cbox(title: [GPR])[ set $A={x_1, ..., x_m}$, 
+#cbox(title: [GPR])[
+  training data-set $A={x_1, ..., x_m}$, observed value-set $y_A$, prior mean $mu(x)$, prior mean vector $bold(mu(A))$.
   $y tilde cal(N)(0,K_(A A)+sigma_n^2 I)=cal(N)(0,K_y)$
-  *Mean*: $mu^*(x)= mu(x) + k(x,A)K_y^(-1)(y_A -mu_A)$
-  *Cov*: $k^*(x,x')=k(x,x')-k(x,A)K_y^(-1)k(A,x')$
-  *Predictive*: $y^* tilde cal(N)(mu^*, k^*(x,x') +sigma_n^2)$
+  *Mean*: $mu_*(x_*)= mu(x_*) + k(x_*,A)K_y^(-1)(y_A -mu_A)$
+  *Cov*: $k_*(x_*,x')=k(x_*,x')-k(x_*,A)K_y^(-1)k(A,x')$
+  *Predictive*: $y_* tilde cal(N)(mu_*, k_*(x,x') +sigma_n^2)$
 ]
 
 #cbox(title: [Kernels])[
-  *Linear*: $k(x,x')=x^top x'+sigma_0^2$
+  *Linear*: $k(x,x')=x^top x'+sigma_0^2$有rank=1协方差matrix.
   *RBF*: $k=exp((-||x-x'||^2) /(2ell^2))$ smooth无限可微
   *Laplace*: $k = exp(-r / ell)$ Rough, sharp peaks, $C^0$ cont
   *Cosine*: $k = cos(2 pi r / p)$ (Periodic, no decay)
@@ -114,21 +115,23 @@ $k(x_i, x_i)$:each points自由度/方差; $k(x_i, x_j)$ points间通信/耦合�
   *Stationary*: $k(x,x')=k(x-x')$; *Isotropic*: $k=k(||x-x'||)$
 ]
 
-#cbox(title: [Marginal Lik])[
+#cbox(title: [Marginal似然])[
   $log p(y|X)=-1/2 y^top K_y^(-1)y-1/2 log det(K_y)+C$
-  Balance: Data fit(前) vs Complexity(后)
+  Balance: Data fit(前)减去Complexity panelity(后)
+  . Marginal似然关于hyperparam通常nonconvex(多峰), local mininum.
+  标准GP$y = f + epsilon$闭式解存在$mu_* = k_*^top (K + sigma^2 I)^(-1) y$, $sigma_*^2 = k(x_*, x_*) - k_*^top (K + sigma^2 I)^(-1) k_*$, hence无需VI. Non-Gaussian liklihd无闭式解, VI/MCMC.
 ]
 
-#cbox(title: [Approx $O(n^3)$ → lower])[
-  *RFF*: $k(x-x')approx phi(x)^top phi(x')$, $O(n m^2+m^3)$
-  Bochner: stationary kernel ↔ Fourier of non-neg measure
-  *Inducing Pts*: subset $m<<n$ points for approx, $O(N bold(M)^2)$( LoRA)
+#cbox(title: [Sparse GP/ Inducing点])[
+  $N$: data, $M$: inducings. 标准GP $O(N^3)$. SoR/FITC/VFE/RFF: $O(N^2M + M^3)$, $M^3$: inducings自身协方差求逆, $N M^2$: N数据点M inducing间的交互.
+  //Bochner Thrm: stationary kernel ↔ Fourier of non-neg measure
+  Inducing Points: subset $m<<n$ points for approx, $O(N bold(M)^2)$ low-rank核近似.
 ]
 
 = Variational Inference, ELBO
 
 #cbox(title: [Motiv])[
-  考虑$ p(y^*|x^*, D) = ∫ p(y^*|w)p(w|D)d w$ 不同approx处理intractable积分方式不同: Laplace(峰值) $p(w|D) approx cal(N)(w_"MAP", -H^(-1))$1次Hessian且可微; VI `min` ELBO, 用$q(dot)$近似$Z$; MC直接sample $w_s approx p(w|D)$ unbiasd地估
+  考虑$ p(y_*|x_*, D) = ∫ p(y_*|w)p(w|D)d w$ 不同approx处理intractable积分方式不同: Laplace(峰值) $p(w|D) approx cal(N)(w_"MAP", -H^(-1))$1次Hessian且可微; VI `min` ELBO, 用$q(dot)$近似$Z$; MC直接sample $w_s approx p(w|D)$ unbiasd地估
   
   近似$p(theta|D)$ with $q(theta|lambda)$ by min $"KL"(q||p)$, $q(dot)$是自定义的approx分布.
   注意识别$log(p(y))$对于$EE_q(theta)$无关, $EE_q [log p(y)] =log p(y)$为const.
@@ -219,12 +222,13 @@ $.
   Posterior always interpretable as Gibbs
 ]
 */
-= Bayesian Neural Networks
+= Bayesian   Networks
 
 #cbox(title: [Model])[
   Prior: $theta tilde cal(N)(0,sigma_p^2 I)$
   *Homoscedastic*: $y|x,theta tilde cal(N)(f(x;theta),sigma^2)$ fixed noise
-  *Heteroscedastic*: $y tilde cal(N)(f_mu (x;theta),exp{f_sigma (x;theta)})$ input-dependent noise
+  *Heteroscedastic*: $y tilde cal(N)(f_mu (x;theta),sigma^2(x))$ input-dependent noise
+  homo时greedily选max variance$<=>$max IG; heter时还要看SNR, $I(f;y_t | x_t ) = 1/2 log (1+ sigma^2_(t-1)(x_t)\/sigma^2(x_t) )$
 ]
 
 #cbox(title: [Hetero NLL])[
@@ -639,14 +643,5 @@ Optimal baseline: $b^#opt (s) = V^pi (s)$ (minimizes $sigma^2$, if $nabla$roughl
 
 //||========================================||
 = QuickCheck:
-- *VI*: Approx posterior via ELBO. Laplace `MAP`, Reparam for grad.
-- *MCMC*: Sample posterior. MH accept/reject, Gibbs coordinate, Langevin uses $nabla$.
-- *GP*: Prior over fncs, closed-form posterior. RBF smooth, Matérn tunable.
-- *BNN*: Prior on weights, MC predictive. Aleatoric=data noise, Epistemic=model.
-- *Active*: Max MI, BALD for disagreement, submodular→greedy$(1-1/e)$.
-- *BO*: UCB balance explore/exploit, EI expected gain, Thompson sample.
-- *BN*: DAG factorization, d-sep for indep, BP exact on trees.
-- *KF*: Linear Gaussian, Kalman gain trades predict vs observe.
-- *Diffusion*: Forward=noise, Backward=denoise, train predict $epsilon$.
-- *On/Off*: On=SARSA,REINFORCE,PPO; Off=Q-learn,DQN,SAC
+- *On/Off*: ON=SARSA,REINFORCE,PPO; Off=Q-learn,DQN,SAC
 - *Bellman*: $V=R+gamma P V$;
