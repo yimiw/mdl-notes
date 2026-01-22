@@ -1,5 +1,5 @@
 # Typst build outputs
-*.pdf
+# (PDFs are now tracked)
 
 # System files
 .DS_Store
