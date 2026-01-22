@@ -165,11 +165,11 @@
   align(center)[
     #v(2fr)
     #text(size: 2.2em, weight: "bold", fill: primary_color)[#title]
-    #v(0.8em, weak: true)
+    #v(0.5em, weak: true)
     #text(size: 1em, style: "italic", fill: accent_color.darken(30%))[
       Lecture Notes
     ]
-    #v(1.2em, weak: true)
+    #v(0.5em, weak: true)
     #for author in authors [
       #text(size: 1.1em)[#author.name] \
     ]

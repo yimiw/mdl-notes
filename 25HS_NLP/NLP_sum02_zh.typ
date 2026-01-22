@@ -7,7 +7,7 @@
   authors: ((name: ""),),
 
   // Customize for compact printing
-  base_size: 10pt, //9pt
+  base_size: 9pt, //10pt不小
   heading1_size: 1.3em,
   heading2_size: 1.2em,
   math_size: 0.95em,
@@ -29,145 +29,173 @@
 
 = Semirings <sec:semirings>
 
-== Motive: one algo解决多个问题
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    == Motive: one algo解决多个问题
 
-核心洞察：计算 normalizer $Z$ 和寻找 highest-scoring path 本质上都是 *shortest path problems*。与其为每个任务设计单独algo，不如用 semiring 参数化：
+    核心洞察：计算 normalizer $Z$ 和寻找 highest-scoring path 本质上都是 *shortest path problems*。与其为每个任务设计单独algo，不如用 semiring 参数化：
 
-$ sum arrow.squiggly plus.o, quad product arrow.squiggly times.o $
+    $ sum arrow.squiggly plus.o, quad product arrow.squiggly times.o $
 
-若原algo计算 $Z = sum_(bold(y)) product_n exp "score"(y_n)$，则 semiringified 版本计算：
-$ plus.o.big_(bold(y)) times.o.big_n exp "score"(y_n) $
+    若原algo计算 $Z = sum_(bold(y)) product_n exp "score"(y_n)$，则 semiringified 版本计算：
+    $ plus.o.big_(bold(y)) times.o.big_n exp "score"(y_n) $
 
-这之所以可行，是因为我们只需 associativity、commutativity (for $plus.o$)和 distributivity。
-// 我们要 *minimize assumptions*：dynamic programming 只需要 associativity/commutativity/distributivity/identity/annihilator。extra结构（inverse、subtraction、division）不但不必要，还会限制适用范围。
-
-== 代数结构
-
-#definition(title: "Monoid")[
-  三元组 $chevron.l bb(K), times.o, bold(e) chevron.r$ 满足：
-  1. *Associativity:* $(x times.o y) times.o z = x times.o (y times.o z)$
-  2. *Identity:* $x times.o bold(e) = bold(e) times.o x = x$
-
-  直觉：比 group 少一个 inverse 公理，所以更简单。
-]
-
-#definition(title: "Semiring")[
-  五元组 $chevron.l bb(K), plus.o, times.o, bold(0), bold(1) chevron.r$ 满足：
-  1. $chevron.l bb(K), plus.o, bold(0) chevron.r$ 是 *commutative monoid*
-  2. $chevron.l bb(K), times.o, bold(1) chevron.r$ 是 *monoid*
-  3. *Distributivity:* $(x plus.o y) times.o z = (x times.o z) plus.o (y times.o z)$（左右皆需）
-  4. *Annihilation:* $bold(0) times.o x = x times.o bold(0) = bold(0)$
-
-  命名由来：比 ring 少公理（ring 要求 $plus.o$ 构成 group，有逆元）。
-]
-
-#note[
-  我们在逆向工程 dynamic programming 所需的最小公理集。Distributivity 是关键——它让指数sum变成多项式形式。
-]
-
-#definition(title: "Idempotent Semiring")[
-  若 $forall a: a plus.o a = a$，则称 semiring 是 idempotent 的。
-
-  典型例子：$max(a, a) = a$。注意 $plus.o$ 只是 binary operation 的记号，不必然是加法！
-]
-
-== 常用 Semirings 速查
+    这之所以可行，是因为我们只需 associativity、commutativity (for $plus.o$)和 distributivity。
+    // 我们要 *minimize assumptions*：dynamic programming 只需要 associativity/commutativity/distributivity/identity/annihilator。extra结构（inverse、subtraction、division）不但不必要，还会限制适用范围。
 
 
-#figure(
-  table(
-    columns: 6,
-    align: center,
-    [*Name*], [$bb(K)$], [$plus.o$], [$times.o$], [$bold(0)$], [$bold(1)$],
-    [Boolean], [${0,1}$], [$or$], [$and$], [$0$], [$1$],
-    [Real #footnote[严格来说，$RR_(>=0)$ 上的 $(+, times)$ 严格来说不是 semiring（$0.6+0.6=1.2 in.not [0,1]$，不封闭），但文献中常如此称呼。]],
-    [$RR_(>=0)$],
-    [$+$],
-    [$times$],
-    [$0$],
-    [$1$],
+    == 常用 Semirings 速查
 
-    [Tropical#footnote[因曲线形态得名。Tropical geometry 与 ReLU 网络的 decision boundary 几何相关——并非冷门领域。]],
-    [$RR union {infinity}$],
-    [$min$],
-    [$+$],
-    [$infinity$],
-    [$0$],
 
-    [Viterbi], [$RR union {-infinity}$], [$max$], [$+$], [$-infinity$], [$0$],
-    [Log],
-    [$RR union {pm infinity}$],
-    [$"lse"$#footnote[其中$"lse"(x,y) = log(e^x + e^y)$. *Log-Sum-Exp Trick*: 若$x >= y$，则
-        $log(e^x + e^y) = x + log(1 + e^(y-x))$因 $y-x <= 0$，故 $e^(y-x) <= 1$，数值稳定。Motiv是计算 $log(e^x + e^y)$ 时，直接 $exp$ 会 overflow。所有神经网络库都实现了 `logsumexp`,如`torch.logsumexp(log_probs, dim=...)`。]],
-    [$+$],
-    [$-infinity$],
-    [$0$],
-  ),
-  caption: [Semiring 对照表],
-)<fig:semiring-table>
+    #figure(
+      table(
+        columns: 6,
+        align: center,
+        [*Name*], [$bb(K)$], [$plus.o$], [$times.o$], [$bold(0)$], [$bold(1)$],
+        [Boolean], [${0,1}$], [$or$], [$and$], [$0$], [$1$],
+        [Real #footnote[严格来说，$RR_(>=0)$ 上的 $(+, times)$ 严格来说不是 semiring（$0.6+0.6=1.2 in.not [0,1]$，不封闭），但文献中常如此称呼。]],
+        [$RR_(>=0)$],
+        [$+$],
+        [$times$],
+        [$0$],
+        [$1$],
+
+        [Tropical#footnote[因曲线形态得名。Tropical geometry 与 ReLU 网络的 decision boundary 几何相关——并非冷门领域。]],
+        [$RR union {infinity}$],
+        [$min$],
+        [$+$],
+        [$infinity$],
+        [$0$],
+
+        [Viterbi], [$RR union {-infinity}$], [$max$], [$+$], [$-infinity$], [$0$],
+        [Log],
+        [$RR union {pm infinity}$],
+        [$"lse"$#footnote[其中$"lse"(x,y) = log(e^x + e^y)$. *Log-Sum-Exp Trick*: 若$x >= y$，则
+            $log(e^x + e^y) = x + log(1 + e^(y-x))$因 $y-x <= 0$，故 $e^(y-x) <= 1$，数值稳定。Motiv是计算 $log(e^x + e^y)$ 时，直接 $exp$ 会 overflow。所有神经网络库都实现了 `logsumexp`,如`torch.logsumexp(log_probs, dim=...)`。]],
+        [$+$],
+        [$-infinity$],
+        [$0$],
+      ),
+      caption: [Semiring 对照表],
+    )<fig:semiring-table>
+  ],
+  [
+    == 代数结构
+
+    #definition(title: "Monoid")[
+      三元组 $chevron.l bb(K), times.o, bold(e) chevron.r$ 满足：
+      1. *Associativity:* $(x times.o y) times.o z = x times.o (y times.o z)$
+      2. *Identity:* $x times.o bold(e) = bold(e) times.o x = x$
+
+      直觉：比 group 少一个 inverse 公理，所以更简单。
+    ]
+
+    #definition(title: "Semiring")[
+      五元组 $chevron.l bb(K), plus.o, times.o, bold(0), bold(1) chevron.r$ 满足：
+      1. $chevron.l bb(K), plus.o, bold(0) chevron.r$ 是 *commutative monoid*
+      2. $chevron.l bb(K), times.o, bold(1) chevron.r$ 是 *monoid*
+      3. *Distributivity:* $(x plus.o y) times.o z = (x times.o z) plus.o (y times.o z)$（左右皆需）
+      4. *Annihilation:* $bold(0) times.o x = x times.o bold(0) = bold(0)$
+
+      命名由来：比 ring 少公理（ring 要求 $plus.o$ 构成 group，有逆元）。
+    ]
+
+    #note[
+      我们在逆向工程 dynamic programming 所需的最小公理集。Distributivity 是关键——它让指数sum变成多项式形式。
+    ]
+
+    #definition(title: "Idempotent Semiring")[
+      若 $forall a: a plus.o a = a$，则称 semiring 是 idempotent 的。
+
+      典型例子：$max(a, a) = a$。注意 $plus.o$ 只是 binary operation 的记号，不必然是加法！
+    ]
+  ],
+)
+
 
 
 #warning[
   *考试高频题型*：判断给定结构是否是 monoid/semiring。TA 强调这类题"fast, easy to check, shows understanding"。
 ]
 
-=== Monoid 判定
-Monoid 判定练习如@fig:exs-monoid-table, Monoid必须满足：
-+ *Closure*：$a times.o b in bb(K)$（operation 封闭）;
-+ *Associativity*：$(a times.o b) times.o c = a times.o (b times.o c)$;
-+ *Identity*：$exists bold(e): a times.o bold(e) = bold(e) times.o a = a$
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    === Monoid 判定
+    Monoid 判定练习如@fig:exs-monoid-table, Monoid必须满足：
+    + *Closure*：$a times.o b in bb(K)$（operation 封闭）;
+    + *Associativity*：$(a times.o b) times.o c = a times.o (b times.o c)$;
+    + *Identity*：$exists bold(e): a times.o bold(e) = bold(e) times.o a = a$
 
-常见陷阱：
-- 减法不 associative
-- 要检查 identity 是否在集合内
-- Monoid 不要求_交换律_哟——string concatenation 是典型例子
+    常见陷阱：
+    - 减法不 associative
+    - 要检查 identity 是否在集合内
+    - Monoid 不要求_commutativity_——string concatenation 是典型例子
 
-#figure(
-  table(
-    columns: 3,
-    align: center,
-    [*结构*], [*是否 Monoid?*], [*原因*],
-    [$chevron.l NN, +, 0 chevron.r$], [✅], [标准例子],
-    [$chevron.l NN, -, 0 chevron.r$], [✗], [不封闭：$0 - 1 = -1 in.not NN$],
-    [$chevron.l ZZ, -, 0 chevron.r$], [✗], [不 associative：$(a-b)-c != a-(b-c)$],
-    [$chevron.l NN, times, 1 chevron.r$], [✅], [乘法封闭、associative],
-    [$chevron.l RR_(>=0), max, 0 chevron.r$], [✅], [$max$ associative，$max(a, 0) = a$],
-    [$chevron.l Sigma^*, "concat", epsilon chevron.r$], [✅], [*非交换* monoid 的例子！],
-  ),
-  caption: [Monoid 判定练习],
-)<fig:exs-monoid-table>
+    #figure(
+      table(
+        columns: 3,
+        inset: 4pt,
+        align: (center, center, left),
+        [*结构*], [*Monoid?*], [*原因*],
+        [$chevron.l NN, +, 0 chevron.r$], [✅], [标准例子],
+        [$chevron.l NN, -, 0 chevron.r$], [✗], [不封闭：$0 - 1 = -1 in.not NN$],
+        [$chevron.l ZZ, -, 0 chevron.r$], [✗], [不 associative：$(a-b)-c != a-(b-c)$],
+        [$chevron.l NN, times, 1 chevron.r$], [✅], [乘法封闭、associative],
+        [$chevron.l RR_(>=0), max, 0 chevron.r$], [✅], [$max$ associative，$max(a, 0) = a$],
+        [$chevron.l Sigma^*, "concat", epsilon chevron.r$], [✅], [*非交换* monoid 的例子！],
+      ),
+      caption: [Monoid 判定练习],
+    )<fig:exs-monoid-table>
+  ],
+  [
+    === Semiring 判定清单
 
+    除 monoid 条件外，还需：
+    1. $chevron.l bb(K), plus.circle, bold(0) chevron.r$ 是 *commutative* monoid
+    2. $chevron.l bb(K), times.circle, bold(1) chevron.r$ 是 monoid
+    3. *Distributivity*：$a times.circle (b plus.circle c) = (a times.circle b) plus.circle (a times.circle c)$
+    4. *Annihilation*：$bold(0) times.circle a = a times.circle bold(0) = bold(0)$
 
-=== Semiring 判定清单
-
-除 monoid 条件外，还需：
-1. $chevron.l bb(K), plus.circle, bold(0) chevron.r$ 是 *commutative* monoid
-2. $chevron.l bb(K), times.circle, bold(1) chevron.r$ 是 monoid
-3. *Distributivity*：$a times.circle (b plus.circle c) = (a times.circle b) plus.circle (a times.circle c)$
-4. *Annihilation*：$bold(0) times.circle a = a times.circle bold(0) = bold(0)$
-
-#figure(
-  table(
-    columns: 3,
-    [*结构*], [*是否 Semiring?*], [*关键点*],
-    [$chevron.l NN, +, times, 0, 1 chevron.r$], [✅], [counting paths],
-    [$chevron.l RR_(>=0), max, times, 0, 1 chevron.r$], [✅], [unnormalized probabilities],
-    [$chevron.l RR_(>=0), max, +, 0, 0 chevron.r$], [✗], [$bold(0) = bold(1) = 0$ 矛盾！],
-    [$chevron.l RR union {-infinity}, min, +, +infinity, 0 chevron.r$], [✅], [shortest path (tropical)],
-    [$chevron.l RR union {+infinity}, min, +, -infinity, 0 chevron.r$], [✗], [不 distributive!],
-    [$chevron.l cal(P)(Sigma^*), union, "concat", emptyset, {epsilon} chevron.r$], [✅], [语言的集合，*非交换*乘法],
-  ),
-  caption: [Semiring 判定练习],
+    #figure(
+      table(
+        inset: 4pt,
+        columns: 3,
+        [*结构*], [*Semiring?*], [*关键点*],
+        [$chevron.l NN, +, times, 0, 1 chevron.r$], [✅], [counting paths],
+        [$chevron.l RR_(>=0), max, times, 0, 1 chevron.r$], [✅], [unnormalized probabilities],
+        [$chevron.l RR_(>=0), max, +, 0, 0 chevron.r$], [✗], [$bold(0) = bold(1) = 0$ 矛盾！],
+        [$chevron.l RR union {-infinity}, min, +, +infinity, 0 chevron.r$], [✅], [shortest path (tropical)],
+        [$chevron.l RR union {+infinity}, min, +, -infinity, 0 chevron.r$], [✗], [不 distributive!],
+        [$chevron.l cal(P)(Sigma^*), union, "concat", emptyset, {epsilon} chevron.r$], [✅], [语言的集合，*非交换*乘法],
+      ),
+      caption: [Semiring 判定练习],
+    )
+  ],
 )
 
-#note[
-  *关键陷阱*：$bold(0) = bold(1)$ 时必然失败。因为：
-  - $a times.circle bold(0) = bold(0)$（annihilation）
-  - $a plus.circle bold(0) = a$（identity）
-  - 若 $bold(0) = bold(1)$，则 $a times.circle bold(1) = bold(0)$，但应有 $a times.circle bold(1) = a$
 
-  *Distributivity 检验*：$min(1, 2) + 3 = 4$，但 $min(1+3, 2+3) = 4$？✅
-  反例：$min(1, 2) + 3 != min(1, 2+3)$（错误方向的 distributivity）
+
+
+#note[
+  #grid(
+    columns: (2fr, 3fr),
+    gutter: 1em,
+    [
+      *关键陷阱*：$bold(0) = bold(1)$ 时必然失败。因为：
+      - $a times.circle bold(0) = bold(0)$（annihilation）
+      - $a plus.circle bold(0) = a$（identity）
+      - 若 $bold(0) = bold(1)$，则 $a times.circle bold(1) = bold(0)$，但应有 $a times.circle bold(1) = a$
+    ],
+    [
+      *Distributivity 检验*：$min(1, 2) + 3 = 4$，但 $min(1+3, 2+3) = 4$？✅
+
+      反例：$min(1, 2) + 3 != min(1, 2+3)$（错误方向的 distributivity）
+    ],
+  )
 ]
 
 == Closed Semiring 与inftysum
@@ -529,34 +557,42 @@ Composition 自动处理 alignment 的sum。
 
 == Closed Semiring 与 Kleene Star
 
-处理 *cyclic* WFSA 需要 infinite sums。关键工具是 *Kleene star*。
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1.5em,
+  [
+    处理 *cyclic* WFSA 需要 infinite sums。关键工具是 *Kleene star*。
 
-#definition(title: "Closed Semiring (revisited)")[
-  Semiring 称为 *closed* 若存在 Kleene star 运算 $a^*$ 满足：
-  $
-    a^* & = bold(1) plus.o a times.o a^* \
-    a^* & = bold(1) plus.o a^* times.o a
-  $
-]
+    #definition(title: "Closed Semiring (revisited)")[
+      Semiring 称为 *closed* 若存在 Kleene star 运算 $a^*$ 满足：
+      $
+        a^* & = bold(1) plus.o a times.o a^* \
+        a^* & = bold(1) plus.o a^* times.o a
+      $
+    ]
 
-这两条公理看似抽象，实则 geometric series 天然满足：
-$sum_(n>=0) x^n & = 1 + x dot sum_(n>=0) x^n = 1 + (sum_(n>=0) x^n) dot x$
+    这两条公理看似抽象，实则 geometric series 天然满足：
+    $sum_(n>=0) x^n & = 1 + x dot sum_(n>=0) x^n = 1 + (sum_(n>=0) x^n) dot x$
 
-对 $|x| < 1$，closed form 为 $x^* = 1\/(1-x)$。
+    对 $|x| < 1$，closed form 为 $x^* = 1\/(1-x)$。
+  ],
+  [
+    #note[
+      *Real semiring 本身不 closed*：若 $x = 2$，则 $sum x^n$ 发散。需扩展到 *extended reals* $RR union {infinity}$。
+    ]
 
-#tip[
-  *Real semiring 本身不 closed*：若 $x = 2$，则 $sum x^n$ 发散。需扩展到 *extended reals* $RR union {infinity}$。
-]
 
-=== Matrix Version
+    * Matrix Version*: 若 $bold(M)$ 是 semiring 值矩阵，则：
+    $ bold(M)^* = sum_(n>=0) bold(M)^n $
 
-若 $bold(M)$ 是 semiring 值矩阵，则：
-$ bold(M)^* = sum_(n>=0) bold(M)^n $
+    在 real semiring 中，这收敛当且仅当 $bold(M)$ 的 *largest eigenvalue $< 1$*。此时：
+    $ bold(M)^* = (bold(I) - bold(M))^(-1) $
 
-在 real semiring 中，这收敛当且仅当 $bold(M)$ 的 *largest eigenvalue $< 1$*。此时：
-$ bold(M)^* = (bold(I) - bold(M))^(-1) $
+    这给出 cubic time algorithm（matrix inversion）。但问题是：semiring 没有 minus 和 inverse！
+  ],
+)
 
-这给出 cubic time algorithm（matrix inversion）。但问题是：semiring 没有 minus 和 inverse！
+
 
 == Lehmann's Algorithm
 
@@ -730,25 +766,33 @@ Floyd-Warshall 是 Lehmann's algorithm 在 tropical semiring $chevron.l RR union
 | Grammar | 已知 | 需 reverse engineer |
 
 == Context-Free Grammars
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    #definition(title: "Context-Free Grammar (CFG)")[
+      四元组 $chevron.l cal(N), S, Sigma, cal(R) chevron.r$：
+      - $cal(N)$: non-terminal symbols（大写字母）
+      - $S in cal(N)$: start symbol
+      - $Sigma$: terminal symbols（小写字母）
+      - $cal(R)$: production rules，形如 $N -> bold(alpha)$，$bold(alpha) in (cal(N) union Sigma)^*$
 
-#definition(title: "Context-Free Grammar (CFG)")[
-  四元组 $chevron.l cal(N), S, Sigma, cal(R) chevron.r$：
-  - $cal(N)$: non-terminal symbols（大写字母）
-  - $S in cal(N)$: start symbol
-  - $Sigma$: terminal symbols（小写字母）
-  - $cal(R)$: production rules，形如 $N -> bold(alpha)$，$bold(alpha) in (cal(N) union Sigma)^*$
+      String $w$ 属于 language 当且仅当存在从 $S$ 开始 yield $w$ 的 derivation。
+    ]
+  ],
+  [ 称"context-free"是因为 rule 的应用不依赖左右 context——$N$ 无论出现在哪都可被替换。
 
-  String $w$ 属于 language 当且仅当存在从 $S$ 开始 yield $w$ 的 derivation。
-]
+    #note[
+      *CFG 是 model，非 ground truth。*
+      - 它是解释 linguistic data 的工具，非大脑中真实存在的结构
+      - Tree annotations 是某人的 modelling choice
+      - 切勿将 treebank 视为"ground truth"
+    ]
+  ],
+)
 
-称"context-free"是因为 rule 的应用不依赖左右 context——$N$ 无论出现在哪都可被替换。
 
-#note[
-  *CFG 是 model，非 ground truth。*
-  - 它是解释 linguistic data 的工具，非大脑中真实存在的结构
-  - Tree annotations 是某人的 modelling choice
-  - 切勿将 treebank 视为"ground truth"
-]
+
 
 === Ambiguous Grammars
 
@@ -795,7 +839,7 @@ Floyd-Warshall 是 Lehmann's algorithm 在 tropical semiring $chevron.l RR union
 ]
 
 #theorem(title: "CNF Theorem")[
-  任何 CFG $G$ 可转换为 CNF grammar $G'$，使得 $L(G') = L(G)$（或 $L(G') = L(G) - {epsilon}$）。概率也可保持。
+  任何 CFG $G$ 可转换为 CNF grammar $G'$，使得 $L(G') = L(G)$（或 $L(G') = L(G) - {epsilon}$）。prob也可保持。
 ]
 
 CNF 的关键后果：
@@ -1063,55 +1107,79 @@ Jay Earley 进一步证明：对*任意* CFG（非 CNF），可达到 $O(N^3 |G|
 
 === CRF 与 CFG 的对应
 
-#warning[
-  *Exercise 考点*：将 CRF 写成 CFG 形式，理解两者结构对应。
-]
+#grid(
+  columns: (1fr, 2fr),
+  gutter: 1em,
+  [
+    #warning[
+      *Exercise 考点*：将 CRF 写成 CFG 形式，理解两者结构对应。
+    ]
+    CRF 是一种 *right-recursive CFG*：
 
-CRF 是一种 *right-recursive CFG*：
+    结果：$O(|cal(T)|^2)$ 条 transition rules，与 CRF 的 transition matrix 对应。
+  ],
+  [
+    #cbox(title: "CRF as CFG")[
+      给定 tag set $cal(T)$，构造 CFG：
 
-#cbox(title: "CRF as CFG")[
-  给定 tag set $cal(T)$，构造 CFG：
+      - Non-terminals: $B_t$ for each $t in cal(T)$, plus $S$
+      - Rules:
+        - $S -> B_t$ for each $t in cal(T)$（起始）
+        - $B_t -> A_t B_{t'}$ for each $t, t' in cal(T)$（transition）
+        - $A_t -> w$ for each word $w$, tag $t$（emission）
 
-  - Non-terminals: $B_t$ for each $t in cal(T)$, plus $S$
-  - Rules:
-    - $S -> B_t$ for each $t in cal(T)$（起始）
-    - $B_t -> A_t B_{t'}$ for each $t, t' in cal(T)$（transition）
-    - $A_t -> w$ for each word $w$, tag $t$（emission）
-
-  这强制 *线性结构*——parse tree 必须是 right-branching chain。
-]
-
-结果：$O(|cal(T)|^2)$ 条 transition rules，与 CRF 的 transition matrix 对应。
+      这强制 _linear_ structure——parse tree 必须是 right-branching chain。
+    ]
+  ],
+)
 
 
-=== Topological Order 视角
 
-CKY 的 for loops 实际上是在遍历一个 *generalized topological order*：
 
-- 枚举所有 triples $(i, j, k)$ 满足 $0 < i < j < k <= N$
-- 按 span length $k - i$ 递增
-- 同一 length 内，任意顺序皆可
 
-这与 CRF 中同一 time step 内 tags 可任意顺序更新是同一 insight。
 
-=== Semiring 化与 Viterbi
 
-CKY 可用任意 semiring：
+#grid(
+  columns: (1fr, 1fr, 1fr),
+  gutter: 1em,
+  [
+    === Topological Order 视角
 
-- *Real semiring*：计算 $Z(bold(w))$（normalizer）
-- *Viterbi semiring*：找 best parse（配合 backpointers）
-- *Entropy semiring*：计算 parse distribution 的 entropy
+    CKY 的 for loops 实际上是在遍历一个 *generalized topological order*：
 
-#note[
+    - 枚举所有 triples $(i, j, k)$ 满足 $0 < i < j < k <= N$
+    - 按 span length $k - i$ 递增
+    - 同一 length 内，任意顺序皆可
+
+    这与 CRF 中同一 time step 内 tags 可任意顺序更新是同一 insight。
+  ],
+  [
+    === Semiring 化与 Viterbi
+
+    CKY 可用任意 semiring：
+
+    - *Real semiring*：计算 $Z(bold(w))$（normalizer）
+    - *Viterbi semiring*：找 best parse（配合 backpointers）
+    - *Entropy semiring*：计算 parse distribution 的 entropy
+
+
+  ],
+  [
+    === Training
+
+    Scoring function 可以是任意 neural network。Training 方式与 CRF 相同：
+    $ cal(L) = sum_((bold(w), bold(t)) in cal(D)) ["score"(bold(t), bold(w)) - log Z(bold(w))] $
+
+    对 CKY forward pass 做 backprop 即可求 gradient。
+  ],
+)
+
+#tip[
   *与 Assignment 2 的联系*：Given已经用 semiring 算过 entropy。同样的 semiring 直接 plug into CKY 即可算 parse trees 的 entropy。这就是 abstraction 的 power。
 ]
 
-=== Training
 
-Scoring function 可以是任意 neural network。Training 方式与 CRF 相同：
-$ cal(L) = sum_((bold(w), bold(t)) in cal(D)) ["score"(bold(t), bold(w)) - log Z(bold(w))] $
 
-对 CKY forward pass 做 backprop 即可求 gradient。
 
 === Weighted CKY 与 Semirings
 
@@ -1136,7 +1204,7 @@ $ cal(L) = sum_((bold(w), bold(t)) in cal(D)) ["score"(bold(t), bold(w)) - log Z
           CRF/HMM：使用 Log 半环进行训练，Viterbi 半环进行解码
           ; PCFG：Inside-Outside 算法使用 Real 半环
           ; 神经网络：前向传播使用 Real 半环，反向传播涉及 Expectation 半环
-          ; 机器翻译：束搜索使用 k-best 半环
+          ; 机器翻译：束search使用 k-best 半环
           ; 依存句法分析：最大生成树使用 MaxPlus 半环
         ]],
     ),
@@ -1144,21 +1212,21 @@ $ cal(L) = sum_((bold(w), bold(t)) in cal(D)) ["score"(bold(t), bold(w)) - log Z
 
     [Tropical/Viterbi], [$(max, times)$], [最优路径/解析树；Viterbi 算法；最大似然解码],
 
-    [Log], [$(op("logsumexp"), +)$], [$log Z(bold(w))$；数值稳定的概率计算；避免下溢],
+    [Log], [$(op("logsumexp"), +)$], [$log Z(bold(w))$；数值稳定的prob计算；避免下溢],
 
     [Boolean], [$(or, and)$], [是否存在有效路径；可达性判断；语法解析存在性],
 
     [Counting], [$(+, times)$], [路径/推导数量；歧义度计算；派生树计数],
 
-    [k-best Tropical], [$(max_k, times)$], [Top-k 最优路径；k-best Viterbi；束搜索 (beam search)],
+    [k-best Tropical], [$(max_k, times)$], [Top-k 最优路径；k-best Viterbi；束search (beam search)],
 
     [Expectation], [$(+, times)$ over $RR times RR$], [特征期望；梯度计算；EM 算法 E-step],
 
     [MinPlus/Tropical], [$(min, +)$], [最短路径；编辑距离；CKY 最小代价解析],
 
-    [Inside], [$(+, times)$], [Inside 概率；PCFG 内向算法；子树概率],
+    [Inside], [$(+, times)$], [Inside prob；PCFG 内向算法；子树prob],
 
-    [Outside], [$(+, times)$], [Outside 概率；PCFG 外向算法；上下文概率],
+    [Outside], [$(+, times)$], [Outside prob；PCFG 外向算法；上下文prob],
 
     [Entropy], [特殊组合], [Shannon 熵计算；不确定性度量；模型置信度],
 
@@ -1251,60 +1319,91 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
 
 === Edge Factorization
 
-#definition(title: "Edge-Factored Model")[
-  假设 scoring function 分解到 edges：
-  $ "score"(bold(t), bold(w)) = "score"(r, bold(w)) + sum_((i -> j) in bold(t)) "score"(i, j, bold(w)) $
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    #definition(title: "Edge-Factored Model")[
+      假设 scoring function 分解到 edges：
+      $ "score"(bold(t), bold(w)) = "score"(r, bold(w)) + sum_((i -> j) in bold(t)) "score"(i, j, bold(w)) $
 
-  其中 $r$ 是 root choice。
-]
+      其中 $r$ 是 root choice。
+    ]
+  ],
+  [
+    将 scores 组织成 matrices：
+    - $bold(A)_(i j) = exp "score"(i, j, bold(w))$：weighted adjacency matrix
+    - $bold(rho)_j = exp "score"(r = j, bold(w))$：root scores
 
-将 scores 组织成 matrices：
-- $bold(A)_(i j) = exp "score"(i, j, bold(w))$：weighted adjacency matrix
-- $bold(rho)_j = exp "score"(r = j, bold(w))$：root scores
+    #note[
+      *为何不能更强？* Edge factorization 是能保持 tractability 的 *strongest* assumption。若允许 second-order（同时看两条 edges），可 encode Hamiltonian path problem（NP-hard）。
+    ]
+  ],
+)
 
-#note[
-  *为何不能更强？* Edge factorization 是能保持 tractability 的 *strongest* assumption。若允许 second-order（同时看两条 edges），可 encode Hamiltonian path problem（NP-hard）。
-]
+
 
 == Matrix-Tree Theorem
 === Root Convention
 
-#note[
-  Dependency tree 引入 external root node（不在 sentence 内），有一条 arc 指向 sentence 的 syntactic head（通常是 main verb）。这让 root choice 也变成普通的 edge choice。
-]
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    #note[
+      Dependency tree 引入 external root node（不在 sentence 内），有一条 arc 指向 sentence 的 syntactic head（通常是 main verb）。这让 root choice 也变成普通的 edge choice。
+    ]
+  ],
+  [两种等价写法：
+    - Root as special node $0$：edges $0 -> j$ 表示 $w_j$ 被选为 root
+    - Root scores vector $bold(rho)$：$bold(rho)_j = exp "score"(r = j, bold(w))$
 
-两种等价写法：
-- Root as special node $0$：edges $0 -> j$ 表示 $w_j$ 被选为 root
-- Root scores vector $bold(rho)$：$bold(rho)_j = exp "score"(r = j, bold(w))$
+    两者最终都落到对 Laplacian $bold(L)$ 第一行的修改（Koo et al. trick）。],
+)
 
-两者最终都落到对 Laplacian $bold(L)$ 第一行的修改（Koo et al. trick）。
+
 
 === Arc Scoring: First-Order vs Higher-Order
 
-#definition(title: "First-Order (Arc-Factored)")[
-  Score 仅依赖单条 arc：
-  $ "score"(bold(t), bold(w)) = "score"(r, bold(w)) + sum_((i -> j) in bold(t)) "score"(i, j, bold(w)) $
+#grid(
+  columns: (1fr, 1fr, 1fr),
+  gutter: 1em,
+  [
+    #definition(title: "First-Order (Arc-Factored)")[
+      Score 仅依赖单条 arc：
 
-  其中 $i$ = head, $j$ = dependent。Complexity: $O(N^2)$ arcs。
-]
+      $"score"(bold(t), bold(w)) = "score"(r, bold(w)) + sum_((i -> j) in bold(t)) "score"(i, j, bold(w))$
 
-#cbox(title: "Second-Order: Grandparent")[
-  Score 还依赖 grandparent $g$（$i$ 的 parent）：
-  $ "score"(bold(t)) = sum_((g -> i -> j) in bold(t)) "score"(g, i, j, bold(w)) $
+      其中 $i$ = head, $j$ = dependent。Complexity: $O(N^2)$ arcs。
+    ]
+  ],
+  [
+    #cbox(title: "Second-Order: Grandparent")[
+      Score 还依赖 grandparent $g$（$i$ 的 parent）：
 
-  Example: "eat a red apple"
-  - Arc: apple $->$ red
-  - Grandparent: eat（因为 eat $->$ apple）
-]
+      $ "score"(bold(t)) = sum_((g -> i -> j) in bold(t)) "score"(g, i, j, bold(w)) $
 
-#cbox(title: "Second-Order: Sibling")[
-  Score 还依赖 sibling $s$（同一 head 下的其他 dependents）：
-  $ "score"(bold(t)) = sum_((i -> j, i -> s) in bold(t)) "score"(i, j, s, bold(w)) $
+      Example: "eat a red apple"
+      则Arc: apple $->$ red; Grandparent: eat（因为 eat $->$ apple）
+    ]
+  ],
+  [
+    #cbox(title: "Second-Order: Sibling")[
+      Score 还依赖 sibling $s$（同一 head 下的其他 dependents）：
 
-  Example: "eat an apple and an orange"
-  - Head: eat
-  - Siblings: apple, orange
-]
+      $ "score"(bold(t)) = sum_((i -> j, i -> s) in bold(t)) "score"(i, j, s, bold(w)) $
+
+      Example: "eat an apple and an orange"
+      则Head: eat; Siblings: apple, orange
+    ]
+  ],
+)
+
+
+
+
+
+
 
 === Complexity 分析与 Extreme Structures
 
@@ -1401,57 +1500,72 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
 ]
 === Chu-Liu-Edmonds 详解
 
-#algorithm(title: [CLE Hand-Run Checklist])[
-  *Repeat until no cycle*:
-  1. Greedy step：对每个 non-root node，选 highest incoming arc
-  2. Cycle detection：检查 greedy graph 是否有 cycle
-  3. If no cycle：done
-  4. If cycle exists：
-    - Contract cycle into super-node $c$
-    - Reweight entering edges
-  5. Recurse on contracted graph
-  6. Expand cycles using recorded choices
-]
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    #algorithm(title: [CLE Hand-Run Checklist])[
+      *Repeat until no cycle*:
+      1. Greedy step：对每个 non-root node，选 highest incoming arc
+      2. Cycle detection：检查 greedy graph 是否有 cycle
+      3. If no cycle：done
+      4. If cycle exists：
+        - Contract cycle into super-node $c$
+        - Reweight entering edges
+      5. Recurse on contracted graph
+      6. Expand cycles using recorded choices
+    ]
+  ],
+  [
+    #cbox(title: "Reweighting 公式")[
+      设 cycle $C$ 内节点 $v$ 的 best incoming arc 权重为 $w_v$。
 
-#cbox(title: "Reweighting 公式")[
-  设 cycle $C$ 内节点 $v$ 的 best incoming arc 权重为 $w_v$。
+      对外部节点 $u$ 到 $v in C$ 的 arc：
+      $ "new\_weight"(u, v) = "weight"(u, v) - w_v $
 
-  对外部节点 $u$ 到 $v in C$ 的 arc：
-  $ "new\_weight"(u, v) = "weight"(u, v) - w_v $
+      直觉：选择 $(u, v)$ 意味着放弃 $v$ 在 cycle 内的 arc。Reweight 确保 total cost 正确。
+    ]
 
-  直觉：选择 $(u, v)$ 意味着放弃 $v$ 在 cycle 内的 arc。Reweight 确保 total cost 正确。
-]
+    #cbox(title: "Root Constraint 处理")[
+      CLE base version 允许 root 有多条 outgoing arcs，但 dependency parsing 要求 root 只有 1 outgoing。
 
-#cbox(title: "Root Constraint 处理")[
-  CLE base version 允许 root 有多条 outgoing arcs，但 dependency parsing 要求 root 只有 1 outgoing。
+      *Naive*：对每条 root arc 分别运行 CLE，取最优。Complexity $O(N dot "CLE")$。
 
-  *Naive*：对每条 root arc 分别运行 CLE，取最优。Complexity $O(N dot "CLE")$。
+      *Clever* (Gabow et al.)：计算 swap score = next-best incoming - current incoming，删除 swap score 最小的多余 root edge。
+    ]
+  ],
+)
 
-  *Clever* (Gabow et al.)：计算 swap score = next-best incoming - current incoming，删除 swap score 最小的多余 root edge。
-]
 
 === Arc Scoring Functions (Implementation)
 
-#cbox(title: "Arc Scoring Templates")[
-  #grid(
-    columns: (1fr, 1fr),
-    gutter: 1.5em,
+#grid(
+  columns: (2fr, 1fr),
+  gutter: 1em,
+  [
+    #cbox(title: "Arc Scoring Templates")[
+      #grid(
+        columns: (1fr, 1fr),
+        gutter: 1.5em,
 
-    [Let $bold(h)_i$ be representation of word $i$ (from BiLSTM/Transformer encoder).
+        [Let $bold(h)_i$ be representation of word $i$ (from BiLSTM/Transformer encoder).
 
-      Then set $bold(A)_(i j) = exp "score"(i, j, bold(w))$],
-    [Common choices:
-      - Bilinear: $"score"(i,j) = bold(h)_i^top bold(W) bold(h)_j$
-      - MLP: $"score"(i,j) = bold(v)^top tanh(bold(W)_h bold(h)_i + bold(W)_d bold(h)_j)$
-    ],
-  )
-]
+          Then set $bold(A)_(i j) = exp "score"(i, j, bold(w))$],
+        [Common choices:
+          - Bilinear: $"score"(i,j) = bold(h)_i^top bold(W) bold(h)_j$
+          - MLP: $"score"(i,j) = bold(v)^top tanh(bold(W)_h bold(h)_i + bold(W)_d bold(h)_j)$
+        ],
+      )
+    ]
+  ],
+  [#note[
+    If you add label types $ell$ (subj/obj/etc)：
+    $ "score"(i,j) = max_ell "score"(i, j, ell) $
+    或在 decoding 时 explicitly 保留 labels。
+  ]],
+)
 
-#note[
-  If you add label types $ell$ (subj/obj/etc)：
-  $ "score"(i,j) = max_ell "score"(i, j, ell) $
-  或在 decoding 时 explicitly 保留 labels。
-]
+
 
 // #cbox(title: "Neural Parser Pipeline (Assignment 5)")[
 //   #table(
@@ -1499,33 +1613,49 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
 
 === Tutte's Extension (Directed & Weighted)
 
-Tutte 推广到 *directed weighted* graphs：
-$ Z(bold(w)) = det(bold(L)) $
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    Tutte 推广到 *directed weighted* graphs：
+    $ Z(bold(w)) = det(bold(L)) $
 
-其中 $bold(L)$ 用 directed adjacency matrix 构造。
-
-#note[
-  Undirected case 中 $bold(A)$ 是 symmetric；directed case 不对称。
-]
+    其中 $bold(L)$ 用 directed adjacency matrix 构造。
+  ],
+  [
+    #note[
+      Undirected case 中 $bold(A)$ 是 symmetric；directed case 不对称。
+    ]
+  ],
+)
 
 === Adding Root Constraint (Koo et al., 2007)
 
-为满足 single-root constraint，修改 Laplacian：
-$
-  bold(L)_(i j) = cases(
-    bold(rho)_j & "if" i = 1,
-    -bold(A)_(i j) & "if" i != j,
-    sum_(k != i) bold(A)_(k j) & "otherwise"
-  )
-$
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    为满足 single-root constraint，修改 Laplacian：
+    $
+      bold(L)_(i j) = cases(
+        bold(rho)_j & "if" i = 1,
+        -bold(A)_(i j) & "if" i != j,
+        sum_(k != i) bold(A)_(k j) & "otherwise"
+      )
+    $
 
-结论：$Z(bold(w)) = det(bold(L))$，complexity $O(N^3)$（determinant computation）。
+    结论：$Z(bold(w)) = det(bold(L))$，complexity $O(N^3)$（determinant computation）。
+  ],
+  [
+    #note[
+      *魔法公式*：整个 normalizer 就是一个 matrix determinant。这不是 dynamic program，而是 linear algebra。
 
-#note[
-  *魔法公式*：整个 normalizer 就是一个 matrix determinant。这不是 dynamic program，而是 linear algebra。
+      *Semiring 问题*：Determinant 需要 *subtraction*（Laplacian 定义中有负号）。若没有 subtraction，需 exponential time。这就是为何无法 semiringify。
+    ]
+  ],
+)
 
-  *Semiring 问题*：Determinant 需要 *subtraction*（Laplacian 定义中有负号）。若没有 subtraction，需 exponential time。这就是为何无法 semiringify。
-]
+
 
 == Inference: Chu-Liu-Edmonds Algorithm
 
@@ -1556,38 +1686,47 @@ Chu-Liu-Edmonds (1965) / Edmonds (1967)：
     - *Recurse* on contracted graph
   4. *Expand* contracted cycles，得到 final tree
 ]
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    === Edge Cataloging
 
-=== Edge Cataloging
+    对 contracted node $c$：
 
-对 contracted node $c$：
+    - *Dead edges*：cycle 内部的 edges（已处理）
+    - *External edges*：不涉及 cycle 的 edges
+    - *Enter edges*：进入 cycle 的 edges（需 reweight）
+    - *Exit edges*：离开 cycle 的 edges
 
-- *Dead edges*：cycle 内部的 edges（已处理）
-- *External edges*：不涉及 cycle 的 edges
-- *Enter edges*：进入 cycle 的 edges（需 reweight）
-- *Exit edges*：离开 cycle 的 edges
+  ],
+  [
+    === Root Constraint Handling
 
-=== Reweighting 直觉
+    Naive：对每个可能的 root edge 分别运行 algorithm，比较结果。Complexity 增加 factor of $N$。
 
-若选择 enter edge $(u, v)$（$v$ 在 cycle 内），则 cycle 中 *到 $v$ 的 edge 被替换*。
+    Clever（Gabow et al.）：在 greedy graph 中若 root 有多条 outgoing edges，删除 *swap score* 最小的（swap score = next-best incoming edge - current incoming edge）。
 
-Reweight：$"new\_weight"(u, v) = "weight"(u, v) + "weight"("cycle edge to" v)$
-
-这确保选 enter edge 的 cost 正确反映 cycle 内部的调整。
-
-=== Root Constraint Handling
-
-Naive：对每个可能的 root edge 分别运行 algorithm，比较结果。Complexity 增加 factor of $N$。
-
-Clever（Gabow et al.）：在 greedy graph 中若 root 有多条 outgoing edges，删除 *swap score* 最小的（swap score = next-best incoming edge - current incoming edge）。
+  ],
+)
 
 === Complexity
+#grid(
+  columns: (1fr, 1.5fr),
+  gutter: 1em,
+  [
+    - Edmonds' original: $O(N^3)$ 或 $O(M N)$
+    - Tarjan's improvement: $O(N^2)$ 或 $O(M log N)$
 
-- Edmonds' original: $O(N^3)$ 或 $O(M N)$
-- Tarjan's improvement: $O(N^2)$ 或 $O(M log N)$
+  ],
+  [
+    #tip[
+      *非 Dynamic Program*：这是 assignment 中唯一一个非 DP 的 algorithm。无法 semiringify——想要不同的 computation（如 entropy）需要用 Matrix-Tree Theorem 的 gradient tricks。
+    ]
+  ],
+)
 
-#note[
-  *非 Dynamic Program*：这是 assignment 中唯一一个非 DP 的 algorithm。无法 semiringify——想要不同的 computation（如 entropy）需要用 Matrix-Tree Theorem 的 gradient tricks。
-]
+
 
 /*
 #cbox(title: "常见考题类型")[
@@ -1604,25 +1743,38 @@ Clever（Gabow et al.）：在 greedy graph 中若 root 有多条 outgoing edges
 
 == 什么是 Meaning？
 
-Syntax 研究 sentence structure；semantics 研究 meaning, which is a philosophical question.
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    Syntax 研究 sentence structure；semantics 研究 meaning, which is a philosophical question.
 
-#definition(title: "Truth-Conditional Semantics")[
-  理解一个 expression 的 meaning，即知道它在何种条件下为 true。
+    #definition(title: "Truth-Conditional Semantics")[
+      理解一个 expression 的 meaning，即知道它在何种条件下为 true。
+      类比数学：理解 $F = F(x)$ 的 meaning，即知道哪些 $F$ 使之为 true/false。
+    ]
 
-  类比数学：理解 $F = F(x)$ 的 meaning，即知道哪些 $F$ 使之为 true/false。
-]
+    为何必须成立？
+    我们能理解unheared, novel sentences从;这只可能因为其由可重用的parts组成; Plagiarism detection 的基础：language 太 expressive，独立产生相同句子的prob极低
 
-#cbox(title: "Example: Quantifier Scope Ambiguity")[
-  "Everybody loves somebody else" 有两个 readings：
 
-  1. $forall p ["Person"(p) arrow exists q ["Person"(q) and p != q and "Loves"(p, q)]]$
-    - 每个人都有（可能不同的）某个他们爱的人
+  ],
+  [
 
-  2. $exists q ["Person"(q) and forall p ["Person"(p) and p != q arrow "Loves"(p, q)]]$
-    - 存在某个特定的人，被所有人爱
+    #cbox(title: "Example: Quantifier Scope Ambiguity")[
+      "Everybody loves somebody else" 有两个 readings：
 
-  这是 *semantic ambiguity*——非 lexical（词义歧义）、非 syntactic（结构歧义），而是 quantifier scope 的歧义。
-]
+      1. $forall p ["Person"(p) arrow exists q ["Person"(q) and p != q and "Loves"(p, q)]]$
+        - 每个人都有（可能不同的）某个他们爱的人
+
+      2. $exists q ["Person"(q) and forall p ["Person"(p) and p != q arrow "Loves"(p, q)]]$
+        - 存在某个特定的人，被所有人爱
+
+      这是 *semantic ambiguity*——非 lexical（词义歧义）、非 syntactic（结构歧义），而是 quantifier scope 的歧义。
+    ]
+  ],
+)
+
 
 === Logical Form
 
@@ -1639,22 +1791,26 @@ Syntax 研究 sentence structure；semantics 研究 meaning, which is a philosop
 
 == Principle of Compositionality
 
-#definition(title: "Frege's Principle of Compositionality")[
-  The meaning of a complex expression is a *function* of the meanings of its constituent parts.
-]
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    #definition(title: "Frege's Principle of Compositionality")[
+      The meaning of a complex expression is a *function* of the meanings of its constituent parts.
+    ]
 
-为何必须成立？
-
-- 我们能理解 *novel sentences*（从未听过的句子）
-- 这只可能因为 sentence 由可重用的 parts 组成
-- Plagiarism detection 的基础：language 太 expressive，独立产生相同句子的概率极低
-
-#note[
-  *Idioms* 是例外（如 "kick the bucket" = die），但：
-  - 可以修改 idiom："He kicked the bucket *yesterday*"
-  - 打破 idiom："He kicked the *red* bucket" 失去 idiomatic reading
-  - Idioms 是更大的 lexical units，compositionality 仍在更高层面成立
-]
+    为何必须成立？
+    我们能理解 *novel sentences*（从未听过的句子）;这只可能因为 sentence 由可重用的 parts 组成; Plagiarism detection 的基础：language 太 expressive，独立产生相同句子的prob极低
+  ],
+  [
+    #note[
+      *Idioms* 是例外（如 "kick the bucket" = die），但：
+      - 可以修改 idiom："He kicked the bucket *yesterday*"
+      - 打破 idiom："He kicked the *red* bucket" 失去 idiomatic reading
+      - Idioms 是更大的 lexical units，compositionality 仍在更高层面成立
+    ]
+  ],
+)
 
 == Lambda Calculus
 
@@ -1856,7 +2012,7 @@ Lambda calculus (Church, 1932) 是 computation 的形式化model，与 Turing ma
 
 #table(
   columns: (auto, auto, auto),
-  inset: 5pt,
+  inset: 4pt,
   align: (left, center, left),
   stroke: 0.75pt,
   table.header([*English Pattern*], [*FOL Formula*], [*Example*]),
@@ -1953,22 +2109,32 @@ Lambda calculus (Church, 1932) 是 computation 的形式化model，与 Turing ma
 - 存在唯一性：需要同时表达存在性和唯一性
 */
 
-#example()[例题：嵌套量词
-  "If one of Abigail's brothers makes noise, Abigail cannot sleep."
+#grid(
+  columns: (1fr, 5fr),
+  gutter: 1em,
+  [
+    #note[
+      多种正确答案可能存在——只要逻辑等价即可。关键是*结构正确*。
+    ]
+  ],
+  [
+    #example()[例题：嵌套量词
+      "If one of Abigail's brothers makes noise, Abigail cannot sleep."
 
-  *分析*：
-  - 结构：If-then $arrow$ 使用 $arrow$
-  - "One of Abigail's brothers" $arrow$ $exists x. "Brother"(x, "Abigail")$
-  - "makes noise" $arrow$ $"MakeNoise"(x)$
-  - "cannot sleep" $arrow$ $not "Sleep"("Abigail")$
+      *分析*：
+      - 结构：If-then $arrow$ 使用 "$arrow$"
+      - "One of Abigail's brothers" $arrow$ $exists x. "Brother"(x, "Abigail")$
+      - "makes noise" $arrow$ $"MakeNoise"(x)$
+      - "cannot sleep" $arrow$ $not "Sleep"("Abigail")$
+      *FOL*：
+      $ (exists x. "Brother"(x, "Abigail") and "MakeNoise"(x)) arrow not "Sleep"("Abigail") $
+    ]
+  ],
+)
 
-  *FOL*：
-  $ (exists x. "Brother"(x, "Abigail") and "MakeNoise"(x)) arrow not "Sleep"("Abigail") $
-]
 
-#note[
-  多种正确答案可能存在——只要逻辑等价即可。关键是*结构正确*。
-]
+
+
 
 === Linear Indexed Grammar 构造策略
 
@@ -1986,81 +2152,94 @@ Lambda calculus (Church, 1932) 是 computation 的形式化model，与 Turing ma
   2. 左向右：先生成前半部分，stack 记录信息，再生成后半部分
 ]
 
-#cbox(title: "例题：$a^n b^n c^n d^n$")[
-  *策略*：两端向中间。先生成 $a...d$，再生成 $b...c$。
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    #cbox(title: "例题：$a^n b^n c^n d^n$")[
+      *策略*：两端向中间。先生成 $a...d$，再生成 $b...c$。
 
-  *Rules*：
-  $
-      S[sigma] & arrow a S[f sigma] d quad "(push f, 生成 a 和 d)" \
-      S[sigma] & arrow T[sigma] quad "(转换，开始生成 b 和 c)" \
-    T[f sigma] & arrow b T[sigma] c quad "(pop f, 生成 b 和 c)" \
-           T[] & arrow epsilon quad "(stack 空，结束)"
-  $
+      *Rules*：
+      $
+          S[sigma] & arrow a S[f sigma] d quad "(push f, 生成 a 和 d)" \
+          S[sigma] & arrow T[sigma] quad "(转换，开始生成 b 和 c)" \
+        T[f sigma] & arrow b T[sigma] c quad "(pop f, 生成 b 和 c)" \
+               T[] & arrow epsilon quad "(stack 空，结束)"
+      $
 
-  *验证*：生成 $a a b b c c d d$（$n=2$）：
-  - $S[] arrow a S[f] d arrow a a S[f f] d d arrow a a T[f f] d d$
-  - $arrow a a b T[f] c d d arrow a a b b T[] c c d d arrow a a b b c c d d$ ✓
-]
+      *验证*：生成 $a a b b c c d d$（$n=2$）：
+      - $S[] arrow a S[f] d arrow a a S[f f] d d arrow a a T[f f] d d$
+      - $arrow a a b T[f] c d d arrow a a b b T[] c c d d arrow a a b b c c d d$ ✓
+    ]
+  ],
+  [#cbox(title: "例题：$w h(w)$ where $w in Sigma^*$")[
+    *策略*：左向右。生成 $w$ 时记录每个 symbol，再用 stack 生成 $h(w)$。
 
-#cbox(title: "例题：$w h(w)$ where $w in Sigma^*$")[
-  *策略*：左向右。生成 $w$ 时记录每个 symbol，再用 stack 生成 $h(w)$。
+    *Rules*：
+    $
+        S[sigma] & arrow a S[a sigma] | b S[b sigma] | ... quad "(生成 w，push symbols)" \
+        S[sigma] & arrow T[sigma] quad "(转换)" \
+      T[a sigma] & arrow h(a) T[sigma] quad "(pop a, 输出 h(a))" \
+      T[b sigma] & arrow h(b) T[sigma] quad "(pop b, 输出 h(b))" \
+             T[] & arrow epsilon quad "(stack 空)"
+    $
+  ]],
+)
 
-  *Rules*：
-  $
-      S[sigma] & arrow a S[a sigma] | b S[b sigma] | ... quad "(生成 w，push symbols)" \
-      S[sigma] & arrow T[sigma] quad "(转换)" \
-    T[a sigma] & arrow h(a) T[sigma] quad "(pop a, 输出 h(a))" \
-    T[b sigma] & arrow h(b) T[sigma] quad "(pop b, 输出 h(b))" \
-           T[] & arrow epsilon quad "(stack 空)"
-  $
-]
+
 
 === CCG 推导练习
 
-#warning[
-  *TA 建议*："Start from basic intuition... 'every dog' is a phrase, 'likes every dog' is a phrase." FOC要注意$not$的优先级.
-]
+#grid(
+  columns: (1fr, 2fr),
+  gutter: 1em,
+  [#warning[
+      *TA 建议*："Start from basic intuition... 'every dog' is a phrase, 'likes every dog' is a phrase." FOC要注意$not$的优先级.
+    ]
 
-#cbox(title: "CCG 推导步骤")[
-  + Lexicon assignment：为每个 word 分配 categories
-  + 从语义直觉出发：哪些 words 应该先组合？
-  + 应用 combinatory rules：Forward ($>$) 或 Backward ($<$)
-  + 同步计算 semantics：每步 apply Lambda terms
-]
+    #cbox(title: "CCG 推导步骤")[
+      + Lexicon assignment：为每个 word 分配 categories
+      + 从语义直觉出发：哪些 words 应该先组合？
+      + 应用 combinatory rules：Forward ($>$) 或 Backward ($<$)
+      + 同步计算 semantics：每步 apply Lambda terms
+    ]
 
-#cbox(title: "例题：'Alex likes every dog'")[
-  *Lexicon*：
-  - Alex : NP : $"Alex"$
-  - likes : $(S backslash "NP") slash "NP"$ : $lambda P. lambda Q. Q(lambda x. P(lambda y. "Likes"(x, y)))$
-  - every : $"NP" slash "N"$ : $lambda P. lambda Q. forall x. P(x) arrow Q(x)$
-  - dog : N : $"Dog"$
+    #note[
+      *Type raising 的作用*：将 NP 提升为 $T slash (T backslash "NP")$，使得 proper noun 可以"主动"与 verb phrase 组合。在 "Alex" 的语义中用 $lambda P. P("Alex")$ 体现。
+    ]
+  ],
+  [
+    #cbox(title: "例题：'Alex likes every dog'")[
+      *Lexicon*：
+      - Alex : NP : $"Alex"$
+      - likes : $(S backslash "NP") slash "NP"$ : $lambda P. lambda Q. Q(lambda x. P(lambda y. "Likes"(x, y)))$
+      - every : $"NP" slash "N"$ : $lambda P. lambda Q. forall x. P(x) arrow Q(x)$
+      - dog : N : $"Dog"$
 
-  *Derivation*：
-  ```
-  every         dog
-  NP/N:λP.λQ.∀x.P(x)→Q(x)    N:Dog
-  ─────────────────────────────────── >
-           NP:λQ.∀x.Dog(x)→Q(x)
+      *Derivation*：
+      ```
+      every         dog
+      NP/N:λP.λQ.∀x.P(x)→Q(x)    N:Dog
+      ─────────────────────────────────── >
+               NP:λQ.∀x.Dog(x)→Q(x)
 
-  likes                    [every dog]
-  (S\NP)/NP:...            NP:λQ.∀x.Dog(x)→Q(x)
-  ──────────────────────────────────────────────── >
-          S\NP:λQ.Q(λx.∀y.Dog(y)→Likes(x,y))
+      likes                    [every dog]
+      (S\NP)/NP:...            NP:λQ.∀x.Dog(x)→Q(x)
+      ──────────────────────────────────────────────── >
+              S\NP:λQ.Q(λx.∀y.Dog(y)→Likes(x,y))
 
-  Alex        [likes every dog]
-  NP:Alex     S\NP:...
-  ──────────────────────────────────── <
-       S:∀x.Dog(x)→Likes(Alex,x)
-  ```
+      Alex        [likes every dog]
+      NP:Alex     S\NP:...
+      ──────────────────────────────────── <
+           S:∀x.Dog(x)→Likes(Alex,x)
+      ```
 
-  *最终语义*：$forall x. "Dog"(x) arrow "Likes"("Alex", x)$
+      *最终语义*：$forall x. "Dog"(x) arrow "Likes"("Alex", x)$
 
-  "对所有 $x$，如果 $x$ 是狗，则 Alex 喜欢 $x$"
-]
+      "对所有 $x$，如果 $x$ 是狗，则 Alex 喜欢 $x$"]
+  ],
+)
 
-#note[
-  *Type raising 的作用*：将 NP 提升为 $T slash (T backslash "NP")$，使得 proper noun 可以"主动"与 verb phrase 组合。在 "Alex" 的语义中用 $lambda P. P("Alex")$ 体现。
-]
 
 
 === Termination 与 Turing Completeness
@@ -2080,78 +2259,102 @@ Lambda calculus 的 Turing completeness 来源于：$beta$-reduction 可能*不�
 
 === Extended Lambda Calculus
 
-为 NL semantics，我们扩展 Lambda calculus：
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    #cbox(title: "NL semantics")[
+      *Constants:* 表示 entities（Alex, Bob, Texas, ...）
+      *Predicates:* 表示 relations（$"Likes"(dot, dot)$, $"Person"(dot)$, ...）
+      *Quantifiers:* $forall, exists$
+      *Logical connectives:* $and, or, not, arrow$
+    ]
+  ],
+  [
+    α-conversion 和 $beta$-reduction 规则不变。
 
-- *Constants:* 表示 entities（Alex, Bob, Texas, ...）
-- *Predicates:* 表示 relations（$"Likes"(dot, dot)$, $"Person"(dot)$, ...）
-- *Quantifiers:* $forall, exists$
-- *Logical connectives:* $and, or, not, arrow$
+    #cbox(title: "Semantic Composition Example")[
+      Lexicon: Alex : $"Alex"quad$; Brit : $"Brit"quad$; likes : $lambda y. lambda x. "Likes"(x, y)$
 
-α-conversion 和 $beta$-reduction 规则不变。
+      Derivation of "Alex likes Brit":
+      1. $"likes"("Brit") = (lambda y. lambda x. "Likes"(x,y))("Brit") arrow_beta lambda x. "Likes"(x, "Brit")$
+      2. $(lambda x. "Likes"(x, "Brit"))("Alex") arrow_beta "Likes"("Alex", "Brit")$
+    ]
 
-#cbox(title: "Semantic Composition Example")[
-  Lexicon: Alex : $"Alex"quad$; Brit : $"Brit"quad$; likes : $lambda y. lambda x. "Likes"(x, y)$
-
-  Derivation of "Alex likes Brit":
-  1. $"likes"("Brit") = (lambda y. lambda x. "Likes"(x,y))("Brit") arrow_beta lambda x. "Likes"(x, "Brit")$
-  2. $(lambda x. "Likes"(x, "Brit"))("Alex") arrow_beta "Likes"("Alex", "Brit")$
-]
-
+  ],
+)
 #note[
   *为何 likes 是 $lambda y. lambda x$ 而非 $lambda x. lambda y$？*
 
   因为英语语序是 Subject-Verb-Object。Verb 先接 object（右边），再接 subject（左边）。Lambda 的参数顺序反映了 syntactic composition 的顺序。
 ]
 
+
 == Combinatory Logic
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    Combinatory logic (Curry, 1958) 是 Lambda calculus 的替代——不使用 abstraction，只用 *primitive combinators* 构建 functions。
 
-Combinatory logic (Curry, 1958) 是 Lambda calculus 的替代——不使用 abstraction，只用 *primitive combinators* 构建 functions。
+    #note[
+      $bold(S)$ 和 $bold(K)$ 构成 *complete basis*——任何 Lambda term 都可用 $bold(S)$, $bold(K)$ 表示。例如 $bold(I) = bold(S) bold(K) bold(K)$。
+    ]
+  ],
+  [
+    #definition(title: "Combinators")[
+      *Identity:* $bold(I) x = x quad$; *Constant:* $bold(K) x y = x quad$; *Substitution:* $bold(S) x y z = x z (y z)$
 
-#definition(title: "Combinators")[
-  *Identity:* $bold(I) x = x quad$; *Constant:* $bold(K) x y = x quad$; *Substitution:* $bold(S) x y z = x z (y z)$
+      Convention: left-associative，即 $bold(K) x y = (bold(K) x) y$
+    ]
 
-  Convention: left-associative，即 $bold(K) x y = (bold(K) x) y$
-]
+    其他常用 combinators：
+    *Composition:* $bold(B) x y z = x (y z)$;
 
-#note[
-  $bold(S)$ 和 $bold(K)$ 构成 *complete basis*——任何 Lambda term 都可用 $bold(S)$, $bold(K)$ 表示。例如 $bold(I) = bold(S) bold(K) bold(K)$。
-]
+    *Flip:* $bold(C) x y z = x z y$; $quad$ *Type-raising:* $bold(T) x y = y x$
+  ],
+)
 
-其他常用 combinators：
-- *Composition:* $bold(B) x y z = x (y z)$
-- *Flip:* $bold(C) x y z = x z y$
-- *Type-raising:* $bold(T) x y = y x$
+
+
 
 == Combinatory Categorial Grammar (CCG)
 
-=== 为何需要 CCG？
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    === 为何需要 CCG？
 
-Context-free grammars 无法优雅处理某些 phenomena：
+    Context-free grammars 无法优雅处理某些 phenomena：
 
-1. *Coordination with gapping:*
-  "I like to play bridge and Sarah handball"
+    1. *Coordination with gapping:*
+      "I like to play bridge and Sarah handball"
 
-2. *Cross-serial dependencies:*
-  Dutch/Swiss German 的 verb-object 交叉依赖（recall Lecture 1）
+    2. *Cross-serial dependencies:*
+      Dutch/Swiss German 的 verb-object 交叉依赖（recall Lecture 1）
 
-CCG 是 *mildly context-sensitive*——比 CFG 更 expressive，但仍 polynomial-time parsable。
+    CCG 是 *mildly context-sensitive*——比 CFG 更 expressive，但仍 polynomial-time parsable。
 
-更重要的是：CCG 提供了 *syntax-semantics interface*——将 Lambda calculus 优雅集成到 grammar 中。
+    更重要的是：CCG 提供了 *syntax-semantics interface*——将 Lambda calculus 优雅集成到 grammar 中。
+  ],
+  [
+    === Linear Indexed Grammars（热身）
 
-=== Linear Indexed Grammars（热身）
+    #definition(title: "Linear Indexed Grammar")[
+      类似 CFG，但 non-terminals 可带 *stack*，且 stack 只能传给*one* child：
+      $
+          N[sigma] & arrow alpha M[sigma] beta \
+          N[sigma] & arrow alpha M[f sigma] beta quad "(Push)" \
+        N[f sigma] & arrow alpha M[sigma] beta quad "(Pop)"
+      $
+    ]
 
-#definition(title: "Linear Indexed Grammar")[
-  类似 CFG，但 non-terminals 可带 *stack*，且 stack 只能传给*一个* child：
-  $
-      N[sigma] & arrow alpha M[sigma] beta \
-      N[sigma] & arrow alpha M[f sigma] beta quad "(Push)" \
-    N[f sigma] & arrow alpha M[sigma] beta quad "(Pop)"
-  $
-]
+    LIG 可生成 ${a^n b^n c^n | n in NN}$——CFG 无法做到。
 
-LIG 可生成 ${a^n b^n c^n | n in NN}$——CFG 无法做到。
-
-直觉：CFG 等价于 pushdown automata（无限 states via stack）。LIG 进一步扩展了这种"controlled infinity"。
+    直觉：CFG 等价于 pushdown automata（无限 states via stack）。LIG 进一步扩展了这种"controlled infinity"。
+  ],
+)
 
 === CCG 形式定义
 
@@ -2220,47 +2423,55 @@ LIG 可生成 ${a^n b^n c^n | n in NN}$——CFG 无法做到。
   Rules 是 *schematic*——适用于所有 matching categories。这是 CCG 的设计哲学：rules 是 universal，language-specific 信息全在 lexicon。
 ]
 
-=== Syntax-Semantics Integration
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    === Syntax-Semantics Integration
 
-CCG 的优雅之处：category 的 argument structure 直接对应 Lambda term 的 type！
+    CCG 的优雅之处：category 的 argument structure 直接对应 Lambda term 的 type！
 
-#cbox(title: "Derivation with Semantics")[
-  Lexicon:
-  - Mary : NP : $"Mary"$
-  - likes : $(S backslash "NP") \/ "NP"$ : $lambda y. lambda x. "Likes"(x, y)$
-  - John : NP : $"John"$
+    #cbox(title: "Derivation with Semantics")[
+      Lexicon:
+      - Mary : NP : $"Mary"$
+      - likes : $(S backslash "NP") \/ "NP"$ : $lambda y. lambda x. "Likes"(x, y)$
+      - John : NP : $"John"$
 
-  Parse "Mary likes John":
-  ```
-  Mary          likes                           John
-  NP:Mary    (S\NP)/NP:λy.λx.Likes(x,y)        NP:John
-             ─────────────────────────────────────────── >
-                        S\NP:λx.Likes(x,John)
-  ─────────────────────────────────────────────────────── <
-                     S:Likes(Mary,John)
-  ```
-]
+      Parse "Mary likes John":
+      ```
+      Mary          likes                        John
+      NP:Mary   (S\NP)/NP:λy.λx.Likes(x,y)      NP:John
+                 ───────────────────────────────────── >
+                            S\NP:λx.Likes(x,John)
+      ──────────────────────────────────────────────── <
+                        S:Likes(Mary,John)
+      ```
+    ]
+  ],
+  [
+    === Practical Application: Semantic Parsing to SQL
 
-=== Practical Application: Semantic Parsing to SQL
-
-给定 question "What states border Texas?"，CCG parse 可得：
-$ lambda x. "State"(x) and "Borders"(x, "Texas") $
+    给定 question "What states border Texas?"，CCG parse 可得：
+    $ lambda x. "State"(x) and "Borders"(x, "Texas") $
 
 
-```sql
-SELECT x FROM states WHERE borders(x, 'Texas') #一步之遥即为 SQL
-#同样适用于 robot commands、database queries、code generation 等。
-```
+    ```sql
+    SELECT x FROM states WHERE borders(x, 'Texas') #一步之遥即为 SQL
+    #同样适用于 robot commands、database queries、code generation 等。
+    ```
 
-#note[
-  *与 LLM 的关系*：现代 LLM 可以直接生成 SQL/code，但无法 *guarantee* syntactic validity。CCG 等 grammar-based methods 提供 formal guarantees——在 safety-critical 应用中仍有价值。
-]
+    #note[
+      *与 LLM 的关系*：现代 LLM 可以直接生成 SQL/code，但无法 *guarantee* syntactic validity。CCG 等 grammar-based methods 提供 formal guarantees——在 safety-critical 应用中仍有价值。
+    ]
 
-[Bonus]:CCG parsing 可在 $O(N^6)$ 完成（类似 CKY，但因 composition/type-raising 导致更高 complexity）。
+    [Bonus]:CCG parsing 可在 $O(N^6)$ 完成（类似 CKY，但因 composition/type-raising 导致更高 complexity）。
 
-#tip[
-  *不考*：CCG parsing algorithm 细节不在考试范围。但理解 CCG 如何集成 syntax 和 semantics 是重要的 conceptual point。
-]
+    #tip[
+      *不考*：CCG parsing algorithm 细节不在考试范围。但理解 CCG 如何集成 syntax 和 semantics 是重要的 conceptual point。
+    ]
+  ],
+)
+
 
 
 = Transformer
@@ -2307,176 +2518,214 @@ Attention 解决 fixed-length bottleneck：允许 decoder 在每一步 *动态�
 核心隐喻：*Soft Hash Table*。
 
 === 从 Hard 到 Soft
-
 #cbox(title: "Hash Table → Attention 的演进")[
-  *Step 1: Hard Hash Table*
-  $ V = "lookup"(K, "query") = cases(v_i & "if" k_i = "query", "null" & "otherwise") $
-  问题：discrete lookup，不可微。
-
-  *Step 2: Algebraic View*
-  用 one-hot vector $bold(alpha) in {0,1}^n$（仅一个位置为 1）检索：
-  $ bold(c) = bold(alpha)^top bold(V) = sum_i alpha_i bold(v)_i $
-  仍是 hard retrieval。
-
-  *Step 3: Soft Attention*
-  用prob分布$bold(alpha) in Delta^(|K|)$替代one-hot:
-  $
-    alpha_i &= (exp score(bold(q), bold(k)_i)) / (sum_j exp score(bold(q), bold(k)_j)) = softmax(score(bold(q), bold(K)))_i \
-    bold(c) &= sum_(i=1)^m alpha_i bold(v)_i = bold(alpha)^top bold(V) quad "(context vector, weighted average)"
-  $
-]
-
-现在 $bold(alpha)$ 表示"关注度分布", continuous, differentiable; $alpha_i >= 0, sum_i alpha_i = 1, bold(c) = sum_i alpha_i bold(v)_i$.
-
-=== 数学形式化
-
-#definition(title: "Attention Mechanism")[
-  给定：
-  - *Query* $bold(q) in RR^(d_q)$：当前 decoder 状态（"我在找什么"）
-  - *Keys* $bold(K) in RR^(n times d_k)$：候选位置的表示（"有什么可选"）
-  - *Values* $bold(V) in RR^(n times d_v)$：实际要检索的信息
-  $
-    alpha_i = "softmax"_i ("score"(bold(q), bold(k)_i)) = (exp "score"(bold(q), bold(k)_i))/(sum_j exp "score"(bold(q), bold(k)_j))
-  $
-  $ bold(c) = sum_i alpha_i bold(v)_i = bold(alpha)^top bold(V) quad "(context vector)" $
-]
-
-*Scoring Functions*（实践中常用）：
-- Dot-product: $bold(q)^top bold(k)$，最常用，高效
-- Scaled dot-product: $bold(q)^top bold(k) \/ sqrt(d_k)$，Transformer 默认#footnote[
-    Scaled dot-product 中除以 $sqrt(d_k)$：防止 $d_k$ 很大时 dot product 值过大，导致 softmax 梯度消失（进入饱和区）。Dot product 的 variance 与 dimension 成正比。若不 normalize，当 $d_k$ 很大时，softmax 输入值过大，梯度saturation趋近于0
-  ]
-
-- Additive: $bold(w)^top tanh(bold(W)_q bold(q) + bold(W)_k bold(k))$，Bahdanau 2015
-
-#algorithm(title: "Encoder-Decoder Attention Flow")[
-  ```python
-  # Encoder 阶段
-  K, V = Encoder(x)  # shape: (m, d_model)
-
-  # Decoder 逐步生成
-  for t in 1..n:
-      q = decoder_hidden[t]          # query: (d_model,)
-      scores = score(q, K)           # (m,)
-      α = softmax(scores)            # attention weights
-      c = weighted_sum(α, V)         # context: (d_model,)
-
-      p_t = softmax(FFN([c; q]))     # 融合 context 生成概率
-      y_t ~ p_t
-  ```
-]
-
-=== Encoder-Decoder Attention
-
-#example(title: "MT 中的 Attention")[
-  - $bold(K) = bold(V)$：encoder 各位置的 hidden states $bold(h)_1^("enc"), ..., bold(h)_M^("enc")$
-  - $bold(Q)$：decoder 当前 hidden state $bold(h)_n^("dec")$
-
-  语义：decoder 在生成第 $n$ 个词时，询问"源句中哪些词与当前生成最相关？"
-]
-
-=== Self-Attention
-
-#definition(title: "Self-Attention")[
-  $bold(Q), bold(K), bold(V)$ 均来自 *同一序列* 的不同 linear projections：
-  $ bold(Q) = bold(X) bold(W)^Q, quad bold(K) = bold(X) bold(W)^K, quad bold(V) = bold(X) bold(W)^V $
-
-  每个位置的表示由 *整个序列* 加权得到，捕获 long-range dependencies。
-]
-其输出为contextual embeddings —— 每个 token 的表示包含了序列中其他 tokens 的信息。
+  #grid(
+    columns: (1fr, 1fr),
+    gutter: 1em,
+    [
+      *Step 1*: Hard Hash Table"
+      $ V = "lookup"(K, "query") = cases(v_i & "if" k_i = "query", "null" & "otherwise") $
+      问题：discrete lookup，不可微。仍是 hard retrieval。
 
 
-Self-attention 的意义：
-- *Encoder-only*（如 BERT）：双向 self-attention
-- *Decoder-only*（如 GPT）：causal self-attention（只看过去）
-- 不再需要 encoder-decoder 架构！
-
-=== Self-Attention Complexity
-Self-Attention Complexity & Comparison with N-gram:
-#figure(table(
-  columns: (auto, auto, auto),
-  column-gutter: 0em,
-  align: (center, center, center),
-  stroke: 0.2pt,
-
-  // 表头分组线
-  [Operation / Aspect], [Self-Attention], [N-gram],
-  // 分隔线
-
-  // Complexity 部分
-  [*Complexity Analysis*], [], [],
-  [Sequence length], [$N$], [$N$],
-  [Hidden dimension], [$H$], [---],
-  [Compute $bold(Q), bold(K), bold(V)$], [$O(N H^2)$], [---],
-  [$bold(Q) bold(K)^top$], [$O(N^2 H)$], [---],
-  [Softmax], [$O(N^2)$], [---],
-  [Multiply $bold(V)$], [$O(N^2 H)$], [---],
-  [Total],
-  [*$O(N^2 H + N H^2)$*
-    #footnote[不难发现当 $N >> H$ 时，$O(N^2)$ 是主要瓶颈。]],
-  [---],
-
-  [Bottleneck ($N >> H$)], [$O(N^2)$], [---],
-
-  // 空行分隔
-  [], [], [],
-
-  // N-gram 对比部分
-  [*Qualitative Comparison*], [], [],
-  [Context], [Full sequence], [Fixed window $k$],
-  [Parameters], [Fixed], [Depends on vocab size],
-  [Small dataset], [Prone to overfit], [Works with smoothing],
-  [Large dataset], [Stronger], [Limited by sparsity],
-  [Runtime], [*$O(N^2)$*], [*$O(N)$*],
-))
-
-=== Multi-Head Attention
-
-#definition(title: "Multi-Head Attention")[
-  并行运行 $h$ 个 attention（各有独立参数），拼接后：
-
-  $
-    "MultiHead"(bold(Q), bold(K), bold(V)) = "Concat"("head"_1, ..., "head"_h) bold(W)^O
-    \
-    "head"_i = "Attention"(bold(Q) bold(W)_i^Q, bold(K) bold(W)_i^K, bold(V) bold(W)_i^V)
-  $
-]
+      *Step 2*: Algebraic View
+      用 one-hot vector $bold(alpha) in {0,1}^n$（仅一个位置为 1）检索：
+      $ bold(c) = bold(alpha)^top bold(V) = sum_i alpha_i bold(v)_i $
 
 
-#note[
-  不同 head 可能关注句法/语义/位置等不同模式; 增加model容量，类似 CNN 多通道; 经验上 $h = 6$ 或 $8$ 效果好。
-]
+    ],
 
-#tip[
-  Assignment 6: 证明multi-head self-attention可以表示任意conv层。#footnote[
-    Theorem: 若 multi-head self-attention 有 $K^2$ 个 heads（$K$ 是 kernel size），且使用特定 Gaussian positional encoding，则可精确表示任意 $K times K$ 卷积。这解释了ViT的成功——Transformer 至少和 CNN 一样 expressive，且更 general。
-  ]
+    [
+      *Step 3*: Soft Attention
+      用prob分布$bold(alpha) in Delta^(|K|)$替代one-hot:
+      $
+        alpha_i &= (exp score(bold(q), bold(k)_i)) / (sum_j exp score(bold(q), bold(k)_j)) = softmax(score(bold(q), bold(K)))_i \
+        bold(c) &= sum_(i=1)^m alpha_i bold(v)_i = bold(alpha)^top bold(V) quad "(context vector, weighted average)"
+      $
+
+      现在 $bold(alpha)$ 表示"关注度分布", continuous, differentiable; $alpha_i >= 0, sum_i alpha_i = 1, bold(c) = sum_i alpha_i bold(v)_i$.
+    ],
+  )
 ]
 
 
 
-== Transformer Architecture
+=== Math Formulation
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
 
-#note[Transformer 的核心贡献，关键不在精度提升，而是：*parallelization*。RNN 必须顺序处理，Transformer 可并行处理整个序列——这是 scaling 的基础。
+  [
 
-  *训练并行 vs. 推理串行*：训练时 teacher forcing 可并行计算全序列，但生成时仍需逐词采样（autoregressive bottleneck）]
+    #definition(title: "Attention Mechanism")[
+      给定：
+      - *Query* $bold(q) in RR^(d_q)$：当前 decoder 状态（"我在找什么"）
+      - *Keys* $bold(K) in RR^(n times d_k)$：候选位置的表示（"有什么可选"）
+      - *Values* $bold(V) in RR^(n times d_v)$：实际要检索的信息
+      $
+        alpha_i = "softmax"_i ("score"(bold(q), bold(k)_i)) = (exp "score"(bold(q), bold(k)_i))/(sum_j exp "score"(bold(q), bold(k)_j))
+      $
+      $ bold(c) = sum_i alpha_i bold(v)_i = bold(alpha)^top bold(V) quad "(context vector)" $
+    ]
 
+    *Scoring Functions*（实践中常用）：
+    - Dot-product: $bold(q)^top bold(k)$，最常用，高效
+    - Scaled dot-product: $bold(q)^top bold(k) \/ sqrt(d_k)$，Transformer 默认#footnote[
+        Scaled dot-product 中除以 $sqrt(d_k)$：防止 $d_k$ 很大时 dot product 值过大，导致 softmax 梯度消失（进入饱和区）。Dot product 的 variance 与 dimension 成正比。若不 normalize，当 $d_k$ 很大时，softmax 输入值过大，梯度saturation趋近于0
+      ]
 
-#figure(
-  table(
-    columns: (auto, auto),
-    align: (center, center),
-    stroke: .65pt,
-    table.hline(stroke: 0.5pt),
-    table.header([Component], [Complexity]),
-    [Encoder ($L$ layers)], [$O(L N D^2)$],
-    [Decoder ($1$ layer, no attention)], [$O(M D^2)$],
-    [Cross-attention], [$O(M N D)$],
+    - Additive: $bold(w)^top tanh(bold(W)_q bold(q) + bold(W)_k bold(k))$，Bahdanau 2015
 
-    [Total with attention], [$O(L N D^2 + M N D)$],
-  ),
-  caption: [设encoder 长度 $N$，decoder 长度 $M$，hidden dim $D$，encoder 层数 $L$],
+    #algorithm(title: "Encoder-Decoder Attention Flow")[
+      ```python
+      # Encoder 阶段
+      K, V = Encoder(x)  # shape: (m, d_model)
+
+      # Decoder 逐步生成
+      for t in 1..n:
+          q = decoder_hidden[t]     # query: (d_model,)
+          scores = score(q, K)      # (m,)
+          α = softmax(scores)       # attention weights
+          c = weighted_sum(α, V)    # context: (d_model,)
+
+          p_t = softmax(FFN([c; q])) # 融合context生成prob
+          y_t ~ p_t
+      ```
+    ]],
+  [
+    === Self-Attention Complexity
+    Self-Attention Complexity & Comparison with N-gram:
+    #figure(table(
+      columns: (auto, auto, auto),
+      column-gutter: 0em,
+      align: (center, center, center),
+      stroke: 0.2pt,
+
+      // 表头分组线
+      [Operation / Aspect], [Self-Attention], [N-gram],
+      // 分隔线
+
+      // Complexity 部分
+      [*Complexity Analysis*], [], [],
+      [Sequence length], [$N$], [$N$],
+      [Hidden dimension], [$H$], [---],
+      [Compute $bold(Q), bold(K), bold(V)$], [$O(N H^2)$], [---],
+      [$bold(Q) bold(K)^top$], [$O(N^2 H)$], [---],
+      [Softmax], [$O(N^2)$], [---],
+      [Multiply $bold(V)$], [$O(N^2 H)$], [---],
+      [Total],
+      [*$O(N^2 H + N H^2)$*
+        #footnote[不难发现当 $N >> H$ 时，$O(N^2)$ 是主要瓶颈。]],
+      [---],
+
+      [Bottleneck ($N >> H$)], [$O(N^2)$], [---],
+    ))
+    #figure(table(
+      columns: (auto, auto, auto),
+      column-gutter: 0em,
+      align: (center, center, center),
+      stroke: 0.2pt,
+      // N-gram 对比部分
+      [*Qualitative对比*], [Self-Attention], [N-gram],
+      [Context], [Full sequence], [Fixed window $k$],
+      [Parameters], [Fixed], [Depends on vocab size],
+      [Small dataset], [Prone to overfit], [Works with smoothing],
+      [Large dataset], [Stronger], [Limited by sparsity],
+      [Runtime], [*$O(N^2)$*], [*$O(N)$*],
+    ))
+  ],
 )
+
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+
+  [
+    === Multi-Head Attention
+
+    #definition(title: "Multi-Head Attention")[
+      并行运行 $h$ 个 attention（各有独立参数），拼接后：
+
+      $
+        "MultiHead"(bold(Q), bold(K), bold(V)) = "Concat"("head"_1, ..., "head"_h) bold(W)^O
+        \
+        "head"_i = "Attention"(bold(Q) bold(W)_i^Q, bold(K) bold(W)_i^K, bold(V) bold(W)_i^V)
+      $
+    ]
+
+
+    #note[
+      不同 head 可能关注句法/语义/位置等不同模式; 增加model容量，类似 CNN 多通道; 经验上 $h = 6$ 或 $8$ 效果好。
+    ]
+
+    #tip[
+      Assignment 6: 证明multi-head self-attention可以表示任意conv层。#footnote[
+        Theorem: 若 multi-head self-attention 有 $K^2$ 个 heads（$K$ 是 kernel size），且使用特定 Gaussian positional encoding，则可精确表示任意 $K times K$ 卷积。这解释了ViT的成功——Transformer 至少和 CNN 一样 expressive，且更 general。
+      ]
+    ]
+  ],
+  [
+    === Encoder-Decoder Attention
+
+    #example(title: "MT 中的 Attention")[
+      - $bold(K) = bold(V)$：encoder 各位置的 hidden states $bold(h)_1^("enc"), ..., bold(h)_M^("enc")$
+      - $bold(Q)$：decoder 当前 hidden state $bold(h)_n^("dec")$
+
+      语义：decoder 在生成第 $n$ 个词时，询问"源句中哪些词与当前生成最相关？"
+    ]
+
+    === Self-Attention
+
+    #definition(title: "Self-Attention")[
+      $bold(Q), bold(K), bold(V)$ 均来自 *同一序列* 的不同 linear projections：
+      $ bold(Q) = bold(X) bold(W)^Q, quad bold(K) = bold(X) bold(W)^K, quad bold(V) = bold(X) bold(W)^V $
+
+      每个位置的表示由 *整个序列* 加权得到，捕获 long-range dependencies。
+    ]
+  ],
+)
+
+
+
+== Trsf Architecture
+
+#grid(
+  columns: (1fr, 1fr, 1fr),
+  gutter: 1em,
+
+  [
+    Self-attention的输出为contextual embeddings —— 每个 token 的表示包含了序列中其他 tokens 的信息。
+    Self-attention 的意义：
+    - *Encoder-only*（如 BERT）：双向 self-attention
+    - *Decoder-only*（如 GPT）：causal self-attention（只看过去）
+    - 不再需要 encoder-decoder 架构！
+  ],
+  [
+    #note[Transformer 的核心贡献，关键不在精度提升，而是：*parallelization*。RNN 必须顺序处理，Transformer 可并行处理整个序列——这是 scaling 的基础。
+
+      *训练并行 vs. 推理串行*：训练时 teacher forcing 可并行计算全序列，但生成时仍需逐词sampling（autoregressive bottleneck）]
+  ],
+  [
+    #figure(
+      table(
+        columns: (auto, auto),
+        align: (center, center),
+        stroke: .65pt,
+        table.hline(stroke: 0.5pt),
+        table.header([Component], [Complexity]),
+        [Encoder ($L$ layers)], [$O(L N D^2)$],
+        [Decoder ($1$ layer, no attention)], [$O(M D^2)$],
+        [Cross-attention], [$O(M N D)$],
+
+        [Total with attention], [$O(L N D^2 + M N D)$],
+      ),
+      caption: [设encoder 长度 $N$，decoder 长度 $M$，hidden dim $D$，encoder 层数 $L$],
+    )
+  ],
+)
+
+
+
 
 === 整体结构
 Transformer Encoder Block 图略
@@ -2511,7 +2760,7 @@ Self-attention 是 permutation-invariant
 
 *2. Residual Connection*:
 
-每个 sub-layer 输出：$bold(x) + "Sublayer"(bold(x))$
+每个 sub-layer 输出：$bold(x)_(l+1) = bold(x)_l + "SubLayer"(bold(x)_l)$
 作用：缓解 vanishing gradient，允许更深网络。信息可 bypass 中间层直接传递(允许梯度直接回传)。
 
 *3. Layer Normalization*:
@@ -2527,44 +2776,51 @@ hidden states 的均值/标准差。作用：稳定训练(缓解梯度消失)，
 
 === Encoder vs Decoder vs Encoder-Decoder
 
-#algorithm(title: "Transformer Encoder Layer")[
-  ```python
-  def encoder_layer(x):
-      # 1. Multi-head self-attention
-      attn_out = MultiHeadAttention(Q=x, K=x, V=x)
-      x = LayerNorm(x + attn_out)  # residual + norm
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
 
-      # 2. Feed-forward network
-      ffn_out = FFN(x)  # 2-layer MLP: ReLU(xW₁)W₂
-      x = LayerNorm(x + ffn_out)
+  [
+    #algorithm(title: "Transformer Encoder Layer")[
+      ```python
+          #
+          def encoder_layer(x):
+          # 1. Multi-head self-attention
+          attn_out = MultiHeadAttention(Q=x, K=x, V=x)
+          x = LayerNorm(x + attn_out)  # residual + norm
 
-      return x
-  ```
+          # 2. Feed-forward network
+          ffn_out = FFN(x)  # 2-layer MLP: ReLU(xW₁)W₂
+          x = LayerNorm(x + ffn_out)
 
-  堆叠 $N=6$ 层（原论文）。Decoder 类似，但增加 encoder-decoder attention。
-]
+          return x
+      ```
+    ]堆叠N=6层（原论文）。Decoder 类似，但增加 encoder-decoder attention。
+  ],
+  [
+    #cbox(title: "完整 Transformer 架构")[
+      *Encoder*:
+      1. Input Embedding + Positional Encoding
+      2. $times N$ layers:
+        - Multi-Head Self-Attention
+        - Add & Norm
+        - Feed-Forward Network (FFN)
+        - Add & Norm
 
-$ bold(x)_(l+1) = bold(x)_l + "SubLayer"(bold(x)_l) $
+      *Decoder*:
+      1. Output Embedding + Positional Encoding
+      2. $times N$ layers:
+        - Masked Multi-Head Self-Attention（causal）
+        - Add & Norm
+        - Encoder-Decoder Attention（$bold(Q)$ from decoder，$bold(K),bold(V)$ from encoder）
+        - Add & Norm
+        - FFN + Add & Norm
+      3. Linear + Softmax → $P(y_t | y_(< t), bold(x))$
+    ]
+  ],
+)
 
-#cbox(title: "完整 Transformer 架构")[
-  *Encoder*:
-  1. Input Embedding + Positional Encoding
-  2. $times N$ layers:
-    - Multi-Head Self-Attention
-    - Add & Norm
-    - Feed-Forward Network (FFN)
-    - Add & Norm
 
-  *Decoder*:
-  1. Output Embedding + Positional Encoding
-  2. $times N$ layers:
-    - Masked Multi-Head Self-Attention（causal）
-    - Add & Norm
-    - Encoder-Decoder Attention（$bold(Q)$ from decoder，$bold(K),bold(V)$ from encoder）
-    - Add & Norm
-    - FFN + Add & Norm
-  3. Linear + Softmax → $P(y_t | y_(< t), bold(x))$
-]
 
 // #table(
 //   columns: (1fr, 2fr, 2fr),
@@ -2583,7 +2839,7 @@ $ bold(x)_(l+1) = bold(x)_l + "SubLayer"(bold(x)_l) $
 
 设 vocabulary size $|cal(V)| = 30000$，最大长度 $N = 20$：$|cal(Y)| = |cal(V)|^N = 30000^20 > "宇宙粒子数"$无法穷举！Dynamic programming 也不适用（无 Markovian structure, Viterbi $O(n|cal(V)|^k)$不适用）。
 
-Transformer 的 scoring function 考虑 *entire context*有全局依赖性，不满足局部分解假设 → 搜索空间/搜索图是 *tree* 而非 DAG，状态不合并 → 指数复杂度 → 考虑启发式剪枝
+Transformer 的 scoring function 考虑 *entire context*有global依赖性，不满足local分解假设 → search空间/search图是 *tree* 而非 DAG，状态不合并 → 指数复杂度 → 考虑heuristic剪枝
 
 === Decoding 策略
 
@@ -2596,17 +2852,17 @@ Transformer 的 scoring function 考虑 *entire context*有全局依赖性，不
     [*类型*], [*方法*], [*特点*],
     [Deterministic], [Greedy search], [每步取 $argmax$，快但 suboptimal],
     [Deterministic], [Beam search], [保留 top-$K$ candidates，trade-off],
-    [Stochastic], [Top-$k$ sampling], [从前 $k$ 高概率词中随机采样],
-    [Stochastic], [Nucleus (top-$p$)], [从累积概率达 $p$ 的词中采样],
+    [Stochastic], [Top-$k$ sampling], [从前 $k$ 高prob词中随机sampling],
+    [Stochastic], [Nucleus (top-$p$)], [从累积prob达 $p$ 的词中sampling],
   )
 ]
 
-常见问题：greedy 导致重复，高温采样产生乱码。
+常见问题：greedy 导致重复，高温sampling产生乱码。
 
-*随机采样族*（stochastic decoding）：
+*随机sampling族*（stochastic decoding）：
 
 e.g. Nucleus Sampling (Top-p)
-从累积概率 $>= p$ 的最小词集采样：
+从累积prob $>= p$ 的最小词集sampling：
 $ V^((p)) = "argmin" {V' subset V : sum_(w in V') P(w | bold(y)_(< t), bold(x)) >= p} $
 
 动态调整候选集大小。常用 $p=0.9$。
@@ -2628,7 +2884,7 @@ $ V^((p)) = "argmin" {V' subset V : sum_(w in V') P(w | bold(y)_(< t), bold(x)) 
               new_score = s + log(probs[w])
               all_candidates.append((new_score, seq + [w]))
 
-      # 剪枝：只保留全局 top-K
+      # 剪枝：只保留global top-K
       beams = sorted(all_candidates)[:K]
 
       # 终止条件
@@ -2701,7 +2957,7 @@ $ "count"_"clip"("the") = min("count"_"pred"("the"), max_"ref" "count"_"ref"("th
 
 
 #note[
-  data质量 >> model复杂度。High-quality data 是 NLP 的 "magic element"——这点在 LLM 时代尤为关键。
+  data质量 >> model复杂度。High-quality data 是 NLP 的 "magic element"
 ]
 
 == model分类体系
@@ -2728,26 +2984,27 @@ $ "count"_"clip"("the") = min("count"_"pred"("the"), max_"ref" "count"_"ref"("th
   stroke: 0.5pt + gray,
   inset: 6pt,
   [*Aspect*], [*Probabilistic*], [*Non-Probabilistic*],
-  [输出], [概率分布 $p(y|x)$], [决策边界 / 得分],
+  [输出], [prob分布 $p(y|x)$], [决策边界 / 得分],
   [优势], [Uncertainty quantification, 理论框架成熟], [Interpretable, geometric intuition],
   [劣势], [Independence假设可能不成立], [难以估计 uncertainty],
   [典型], [Naive Bayes, LM], [SVM, rule-based],
 )
 
 === Generative vs Discriminative
+Trade-off：Generative 需更多假设但可处理 missing data；Discriminative 通常分类性能更优。
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [*Generative*：建模 $p(bold(x), y) = p(y) dot p(bold(x)|y)$，可生成新样本],
+  [*Discriminative*：直接建模 $p(y|bold(x))$，专注分类边界],
+)
 
-#definition(title: "核心区别")[
-  - *Generative*：建模 $p(bold(x), y) = p(y) dot p(bold(x)|y)$，可生成新样本
-  - *Discriminative*：直接建模 $p(y|bold(x))$，专注分类边界
-
-  Trade-off：Generative 需更多假设但可处理 missing data；Discriminative 通常分类性能更优。
-]
 
 == Structured Prediction
 
 当 output space $|cal(Y)|$ 指数级大（如所有可能句子）时，无法为每个 $y$ 单独建模。
 
-=== 局部 vs 全局归一化
+=== Local vs Global Normalization
 
 #cbox(title: "Normalization 对比")[
   #table(
@@ -2758,7 +3015,7 @@ $ "count"_"clip"("the") = min("count"_"pred"("the"), max_"ref" "count"_"ref"("th
     [*Type*], [*Locally Normalized*], [*Globally Normalized*],
     [定义],
     [$p(bold(y)|bold(x)) = product_n p(y_n | y_(< n), bold(x))$],
-    [$p(bold(y)|bold(x)) = exp("score"(bold(y))) / Z(bold(x))$],
+    [$p(bold(y)|bold(x)) = exp("score"(bold(y))) \/ Z(bold(x))$],
 
     [归一化], [每步独立归一化], [整个序列归一化],
     [代表], [N-gram, RNN LM, GPT], [CRF, EBM],
@@ -2768,49 +3025,62 @@ $ "count"_"clip"("the") = min("count"_"pred"("the"), max_"ref" "count"_"ref"("th
 ]
 
 #definition(title: "Label Bias Problem")[
-  Locally normalized model 中，若某状态转移概率集中于少数 successor，则该路径被"锁定"——即使后续 observation 强烈反对，也难以修正。
+  Locally normalized model 中，若某状态转移prob集中于少数 successor，则该路径被"锁定"——即使后续 observation 强烈反对，也难以修正。
 ]
 
 === Independence Assumptions 的 Trade-off
 
-*有假设*（如 Markov）：
-- 可用 DP 进行 *exact* decoding
-- model参数少，不易 overfit
-- 可能 underfit（假设过强）
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [有假设（如 Markov）
+    - 可用 DP 进行 *exact* decoding
+    - model参数少，不易 overfit
+    - 可能 underfit（假设过强）
+  ],
+  [无假设（如 Transformer）
+    - 建模能力强，捕获 long-range dependency
+    - 只能 *approximate* decoding（beam search 等）
+    - 易 overfit，需大量data
+    - 可解释性差
+  ],
+)
 
-*无假设*（如 Transformer）：
-- 建模能力强，捕获 long-range dependency
-- 只能 *approximate* decoding（beam search 等）
-- 易 overfit，需大量data
-- 可解释性差
 
 == Loss Functions
 
 === 定义与性质
 
-#definition(title: "Loss/Objective/Cost Function")[
-  将model参数 $theta in Theta$ 映射到实数，量化model在训练data上的拟合程度。
-  $ cal(L): Theta -> RR $
-]
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [#definition(title: "Loss/Objective/Cost Function")[
+      将model参数 $theta in Theta$ 映射到实数，量化model在训练data上的拟合程度。
+      $ cal(L): Theta -> RR $
+    ]
+  ],
+  [Desirable Properties：
+    *Convexity*：保证收敛到 global minimum; *Differentiability*：可用 gradient-based optimization; *Computational efficiency*：快速计算; *Robustness to noise*：对异常值不敏感; *Statistical guarantees*：如 consistency, efficiency
+  ],
+)
 
-*Desirable Properties*：
-1. *Convexity*：保证收敛到 global minimum
-2. *Differentiability*：可用 gradient-based optimization
-3. *Computational efficiency*：快速计算
-4. *Robustness to noise*：对异常值不敏感
-5. *Statistical guarantees*：如 consistency, efficiency
+
 
 === Maximum Likelihood → Cross-Entropy Loss
+#grid(
+  columns: (1fr, 2fr),
+  gutter: 1em,
+  [MLE：$hat(theta) = argmax_theta product_i p(y_i | x_i; theta)$
+    取负对数，转化为 loss：
+    $ cal(L)_("CE")(theta) = -sum_i log p(y_i | x_i; theta) $],
 
-MLE：$hat(theta) = argmax_theta product_i p(y_i | x_i; theta)$
-取负对数，转化为 loss：
-$ cal(L)_("CE")(theta) = -sum_i log p(y_i | x_i; theta) $
+  [#note[
+    *MLE 优点*：Consistent estimator（data $arrow infinity$ 时收敛到真实参数）; Asymptotically efficient（达到 Cramér-Rao lower bound）; 低 KL divergence from true distribution
+    *MLE 局限*：仅适用于 probabilistic models; 易 overfit; 要求 $p(y|x) > 0$（否则 $log 0$ 爆炸）
+  ]],
+)
 
-#note[
-  *MLE 优点*：Consistent estimator（data $arrow infinity$ 时收敛到真实参数）; Asymptotically efficient（达到 Cramér-Rao lower bound）; 低 KL divergence from true distribution
 
-  *MLE 局限*：仅适用于 probabilistic models; 易 overfit; 要求 $p(y|x) > 0$（否则 $log 0$ 爆炸）
-]
 
 === 其他 Loss Functions
 常用 Loss 对比:
@@ -2821,43 +3091,50 @@ $ cal(L)_("CE")(theta) = -sum_i log p(y_i | x_i; theta) $
   inset: 6pt,
   [*Loss*], [*Formula*], [*Convex?*],
   [0-1 Loss], [$bb(1)[hat(y) != y]$], [No],
-  [Hinge (Max-margin)], [$max(0, 1 - y dot f(x))$], [Yes],
+  [Hinge (Max-margin)#footnote[
+      *Hinge Loss*: 不仅要分类正确，还要 margin $>= 1$。Convex 但在 0 点不可微（可用 subgradient）。
+    ]],
+  [$max(0, 1 - y dot f(x))$],
+  [Yes],
+
   [Logistic], [$log(1 + e^(-y dot f(x)))$], [Yes],
   [Exponential], [$e^(-y dot f(x))$], [Yes],
   [Cross-Entropy], [$-sum_c y_c log hat(y)_c$], [Yes],
 )
 
 
-*Hinge Loss* 直觉：不仅要分类正确，还要 margin $>= 1$。Convex 但在 0 点不可微（可用 subgradient）。
-
 == Regularization
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [目标：防止 overfitting，提升 generalization（在 unseen data 上的表现）。
+    #definition(title: "Regularized Loss")[
+      $ cal(L)_("reg")(theta) = cal(L)(theta) + lambda dot R(theta) $
 
-目标：防止 overfitting，提升 generalization（在 unseen data 上的表现）。
+      其中 $R(theta)$ 是 penalty term，$lambda > 0$ 控制正则化强度。
+    ]
 
-#definition(title: "Regularized Loss")[
-  $ cal(L)_("reg")(theta) = cal(L)(theta) + lambda dot R(theta) $
-
-  其中 $R(theta)$ 是 penalty term，$lambda > 0$ 控制正则化强度。
-]
-
-=== L1 vs L2 Regularization
-
-#table(
-  columns: (auto, 1fr, 1fr),
-  align: (left, left, left),
-  stroke: 0.5pt + gray,
-  inset: 6pt,
-  [*Aspect*], [*L1 (Lasso)*], [*L2 (Ridge)*],
-  [Penalty], [$lambda sum_j |theta_j|$], [$lambda sum_j theta_j^2$],
-  [效果], [Sparse：多数 $theta_j = 0$], [Shrinkage：$theta_j$ 趋近 0 但非零],
-  [Bayesian 解释], [Laplace prior], [Gaussian prior],
-  [适用], [Feature selection], [防止 collinearity],
+    其他正则化技术：
+    - *Dropout*：训练时随机置零部分神经元
+    - *Early stopping*：validation loss 不再下降时停止
+    - *Weight decay*：等价于 L2 in certain optimizers
+  ],
+  [
+    #table(
+      columns: (auto, 1fr, 1fr),
+      align: (left, left, left),
+      stroke: 0.5pt + gray,
+      inset: 6pt,
+      [*Aspect*], [*L1 (Lasso)*], [*L2 (Ridge)*],
+      [Penalty], [$lambda sum_j |theta_j|$], [$lambda sum_j theta_j^2$],
+      [效果], [Sparse：多数 $theta_j = 0$], [Shrinkage：$theta_j$ 趋近 0 但非零],
+      [Bayesian 解释], [Laplace prior], [Gaussian prior],
+      [适用], [Feature selection], [防止 collinearity],
+    )
+  ],
 )
 
-其他正则化技术：
-- *Dropout*：训练时随机置零部分神经元
-- *Early stopping*：validation loss 不再下降时停止
-- *Weight decay*：等价于 L2 in certain optimizers
+=== L1 vs L2 Regularization
 
 == Evaluation Metrics
 
@@ -2893,21 +3170,29 @@ $ cal(L)_("CE")(theta) = -sum_i log p(y_i | x_i; theta) $
 
 === Intrinsic vs Extrinsic Evaluation
 
-#table(
-  columns: (auto, 1fr, 1fr),
-  align: (left, left, left),
-  stroke: 0.5pt + gray,
-  inset: 6pt,
-  [*Type*], [*Intrinsic*], [*Extrinsic*],
-  [定义], [Task-neutral，评估model本身], [评估model在下游任务的表现],
-  [LM 例子], [Perplexity, likelihood], [MT BLEU, QA accuracy],
-  [Embedding 例子], [Word analogy, similarity], [下游分类性能],
-  [优点], [快速、可复现], [更贴近实际应用],
-  [缺点], [可能与实际性能脱节], [昂贵、任务依赖],
+#grid(
+  columns: (2fr, 1fr),
+  gutter: 1em,
+  [#table(
+      columns: (auto, 1fr, 1fr),
+      align: (left, left, left),
+      stroke: 0.5pt + gray,
+      inset: 6pt,
+      [*Type*], [*Intrinsic*], [*Extrinsic*],
+      [定义], [Task-neutral，评估model本身], [评估model在下游任务的表现],
+      [LM 例子], [Perplexity, likelihood], [MT BLEU, QA accuracy],
+      [Embedding 例子], [Word analogy, similarity], [下游分类性能],
+      [优点], [快速、可复现], [更贴近实际应用],
+      [缺点], [可能与实际性能脱节], [昂贵、任务依赖],
+    )
+  ],
+  [ NLP 评估的挑战
+
+    主观性：语言风格因人而异（表情符号、句末标点的"攻击性"）; 多正确答案：同一问题可有多个合理回答; Human evaluation 昂贵：且 annotator diversity 难保证; Alignment 问题：model价值观与人类期望的对齐; Data contamination：benchmark 泄露到 training data
+  ],
 )
 
-=== NLP 评估的挑战
-主观性：语言风格因人而异（表情符号、句末标点的"攻击性"）; 多正确答案：同一问题可有多个合理回答; Human evaluation 昂贵：且 annotator diversity 难保证; Alignment 问题：model价值观与人类期望的对齐; Data contamination：benchmark 泄露到 training data
+
 
 == Model Selection
 
