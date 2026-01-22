@@ -1,4 +1,3 @@
-// NLP Cheatsheet - Modular Version using tmp_sht.typ template
 #import "../assets/tmp_sht.typ": *
 
 #show: project.with(
