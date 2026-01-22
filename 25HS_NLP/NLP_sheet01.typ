@@ -1,5 +1,5 @@
 // NLP Cheatsheet - Modular Version using tmp_sht.typ template
-#import "assets/tmp_sht.typ": *
+#import "../assets/tmp_sht.typ": *
 
 #show: project.with(
   title: "25HS_NLP_Cheatsheet",
