@@ -6,8 +6,8 @@
 )
 
 // ========== Configuration ==========
-#let fsize = 8pt
-#let hsize = 9pt
+#let fsize = 10pt
+#let hsize = 11pt
 #let pspace = 0.15em
 #let plead = 0.25em
 
@@ -19,7 +19,6 @@
 
 #show: columns.with(3, gutter: 0.4em)
 
-// ========== Content ==========
 
 = Backpropagation
 

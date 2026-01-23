@@ -1,6 +1,7 @@
 // ========================================
 // Yellow-Purple Note Theme
 // ========================================
+#import "tmp_math.typ": * // Math notation
 
 #let summary_project(
   title: "",
@@ -388,27 +389,3 @@
   )
 }
 
-#let score = $op("score")$
-#let softmax = $op("softmax")$
-#let count = $op("count")$
-#let argmin = $op("arg min")$
-#let argmax = $op("arg max")$
-#let trans = $op("trans")$
-#let emit = $op("emit")$
-#let bos = text(smallcaps("bos"))
-#let eos = text(smallcaps("eos"))
-
-#let RR = $bb(R)$
-#let NN = $bb(N)$
-#let EE = $bb(E)$
-#let PP = $bb(P)$
-
-#let vec(x) = $bold(#x)$
-#let mat(x) = $bold(#x)$
-
-#let doteq = $:=$
-#let grad = $nabla$
-#let hess = $nabla^2$
-#let pm = $plus.minus$
-#let neq = $eq.not$
-#let sim = $tilde.op$

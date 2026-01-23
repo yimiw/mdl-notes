@@ -18,13 +18,6 @@
 
 #show: columns.with(4, gutter: 0.5em)
 
-// ========== 术语缩写 ==========
-#let EE = $bb(E)$
-#let PP = $bb(P)$
-#let VV = $bb(V)$
-#let opt = text([$*$], fill: purple)
-// ==============================
-
 
 = 1. Probability & Info Theory
 

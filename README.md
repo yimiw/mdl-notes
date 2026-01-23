@@ -2,10 +2,10 @@
 
 ## 1. Contents
 
-- `tmp_sht.typ` - Reusable template module (shared across courses)
-- `PAI_sheet-v3.typ` - Probabilistic AI course cheat sheet
-- `NLP_sheet01.typ` - NLP course cheat sheet
+- `PAI_sheet-v3.typ` - cheat sheet for Panic Anxiety Insomnia, aka [PAI](https://las.inf.ethz.ch/teaching/pai-f25), course.
+- `NLP_sheet01.typ` - cheat sheet for Nihilistic Loophole Paradox, ~~No Linguistic Principle~~ ,aka [NLP](https://rycolab.io/classes/intro-nlp-f25), course
 - ...
+- `tmp_math.typ` - Reusable template module (shared across courses)
 
 ## 2. Usage
 
