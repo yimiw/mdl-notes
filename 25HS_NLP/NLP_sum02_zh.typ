@@ -114,8 +114,6 @@
   ],
 )
 
-
-
 #warning[
   *考试高频题型*：判断给定结构是否是 monoid/semiring。TA 强调这类题"fast, easy to check, shows understanding"。
 ]
@@ -200,12 +198,24 @@
 
 == Closed Semiring 与inftysum
 
-#definition(title: "Closed Semiring")[
-  增设 *Kleene star* 运算：$a^* = plus.o.big_(n=0)^infinity a^(times.o n)$，满足：
-  $ a^* = bold(1) plus.o a times.o a^* = bold(1) plus.o a^* times.o a $
+#note[
+  #grid(
+    columns: (2fr, 3fr),
+    gutter: 1em,
+    [
+     #definition(title: "Closed Semiring")[
+      增设 *Kleene star* 运算：$a^* = plus.o.big_(n=0)^infinity a^(times.o n)$，满足：
+      $ a^* = bold(1) plus.o a times.o a^* = bold(1) plus.o a^* times.o a $
+    ]
+    ],
+    [ 
+    对 real semiring 在 $(-1,1)$ 上：$a^* = sum_(n>=0) a^n = 1/(1-a)$（geometric series）。这是 globally normalized language model 的理论基础。
+    ],
+  )
 ]
 
-对 real semiring 在 $(-1,1)$ 上：$a^* = sum_(n>=0) a^n = 1/(1-a)$（geometric series）。这是 globally normalized language model 的理论基础。
+
+
 
 == 动态规划的代数推导
 
