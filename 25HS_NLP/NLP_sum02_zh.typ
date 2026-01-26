@@ -33,7 +33,7 @@
   columns: (1fr, 1fr),
   gutter: 1em,
   [
-    == Motive: one algo解决多个问题
+    == Motive: 多题一解
 
     核心洞察：计算 normalizer $Z$ 和寻找 highest-scoring path 本质上都是 *shortest path problems*。与其为每个任务设计单独algo，不如用 semiring 参数化：
 
@@ -43,7 +43,7 @@
     $ plus.o.big_(bold(y)) times.o.big_n exp "score"(y_n) $
 
     这之所以可行，是因为我们只需#footnote[
-      minimize assumptions的考量：dynamic programming 只需要 associativity/commutativity/distributivity/identity/annihilator。extra结构（inverse、subtraction、division）不但不必要，还会限制适用范围。
+      minimize assumptions的考量：dynamic programming 只需要 associativity/commutativity/distributivity/identity/annihilator。extra结构（inverse、subtraction、division）不但不必要，还会限制适用范围。BTW, semiring命名由来依赖于此，semiring比 ring 少了公理（ring 要求 $plus.o$ 构成 group，有逆元）。
     ] associativity、commutativity (for $plus.o$)和 distributivity。
 
 
@@ -103,12 +103,10 @@
       2. $chevron.l bb(K), times.o, bold(1) chevron.r$ 是 *monoid*
       3. *Distributivity:* $(x plus.o y) times.o z = (x times.o z) plus.o (y times.o z)$（左右皆需）
       4. *Annihilation:* $bold(0) times.o x = x times.o bold(0) = bold(0)$
-
-      命名由来：比 ring 少公理（ring 要求 $plus.o$ 构成 group，有逆元）。
     ]
 
     #note[
-      我们在逆向工程 dynamic programming 所需的最小公理集。Distributivity 是关键——它让指数sum变成多项式形式。
+      我们在逆向工程 dynamic programming 所需的最小公理集。*Distributivity* 是关键——它让exp级求和变成多项式形式。
     ]
 
     #definition(title: "Idempotent Semiring")[
@@ -131,6 +129,11 @@
     - $plus.o$ (OR, MAX, +): 在DP中对应*==分治==*(split points的合并)
     - $times.o$ (AND, $times$,)在DP中对应*==连接==* e.g. 左右子树的组合，沿hypergraph边传递
     - $bold(0)$: 吸收元, 消除invalid结构;  $bold(1)$: 单位元, null结构不破坏整体
+
+    #warning()[
+      不全，另见#link("https://drive.google.com/file/d/1JX7NpwVyh4IJYjpbUTZ_EuK0iv_HyXSj/view?pli=1")[Lecture note]的 #hl[Table5.1]: Examples of semirings
+    ]
+    
 
     === Monoid 判定
     Monoid 判定练习如@fig:exs-monoid-table, Monoid必须满足：

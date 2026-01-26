@@ -67,6 +67,11 @@
     highlight(fill: rgb("#FEF3C7"), text(fill: rgb("#92400E"))[#content])
   }
 
+  // 超链接样式：紫色 + 下划线
+  show link: it => {
+    text(fill: rgb("#339966"))[#underline(it)]
+  }
+
   // 字体设置（支持中文）
   set text(
     font: (western_font, ..chinese_serif),
@@ -391,7 +396,7 @@
   )
 }
 
-/// 备选：警告环境（红色系）
+// 警告环境（红色系）
 #let warning(body) = {
   block(
     width: 100%,
@@ -407,3 +412,5 @@
   )
 }
 
+// 🧪highlight:
+#let hl(body) = highlight(fill: rgb("#FEF3C7"), text(fill: rgb("#92400E"))[#body])
