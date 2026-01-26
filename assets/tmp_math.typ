@@ -30,3 +30,7 @@
 #let pm = $plus.minus$
 #let neq = $eq.not$
 #let sim = $tilde.op$
+
+
+//plattue
+#let c1 = rgb("#FFF3CD") 

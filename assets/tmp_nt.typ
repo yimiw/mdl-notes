@@ -61,6 +61,12 @@
     number-align: center,
   )
 
+  // 高亮语法：==text== 变成金黄色高亮
+  show regex("==([^=]+)=="): it => {
+    let content = it.text.slice(2, -2)  // 去掉前后的 ==
+    highlight(fill: rgb("#FEF3C7"), text(fill: rgb("#92400E"))[#content])
+  }
+
   // 字体设置（支持中文）
   set text(
     font: (western_font, ..chinese_serif),

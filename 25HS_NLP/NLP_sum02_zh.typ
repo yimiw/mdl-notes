@@ -53,6 +53,11 @@
       table(
         columns: 6,
         align: center,
+        fill: (x, y) => {
+          let target_rows = (3,4,5,)  // 需要高亮的行
+          let target_cols = (2,4,)  // 需要高亮的列
+          if target_rows.contains(y) and target_cols.contains(x) {c1}
+        },
         [*Name*], [$bb(K)$], [$plus.o$], [$times.o$], [$bold(0)$], [$bold(1)$],
         [Boolean], [${0,1}$], [$or$], [$and$], [$0$], [$1$],
         [Real #footnote[严格来说，$RR_(>=0)$ 上的 $(+, times)$ 严格来说不是 semiring（$0.6+0.6=1.2 in.not [0,1]$，不封闭），但文献中常如此称呼。]],
@@ -208,11 +213,12 @@
 == Closed Semiring 与inftysum
 
 #grid(
-  columns: (2fr, 1fr),
+  columns: (1.3fr, 1fr),
   gutter: 1em,
   [
     #definition(title: "Closed Semiring")[
-    增设 *Kleene star* 运算：$a^* = plus.o.big_(n=0)^infinity a^(times.o n)$，满足：
+    *Kleene star* 运算：$a^* = plus.o.big_(n=0)^infinity a^(times.o n)$，满足：
+    
     $ a^* = bold(1) plus.o a times.o a^* = bold(1) plus.o a^* times.o a $
   ]
   ],
@@ -296,11 +302,11 @@ CRF 是 structured labeling 的 conditional model，考虑 neighboring labels �
 
 === Forward vs Backward 实现细节
 
-#note[
-  Forward 和 backward 有微妙的不对称性，源于 BOS (beginning of sequence) 存在但 EOS 不显式处理。
-]
 
-#cbox(title: "Pseudo Code 对比")[
+#grid(
+  columns: (2fr, 1fr),
+  [
+    #cbox(title: "Pseudo Code 对比")[
   *Backward Algorithm:*
   ```python
   beta[N, t] = 1  # 直接初始化为 semiring 1
@@ -319,11 +325,20 @@ CRF 是 structured labeling 的 conditional model，考虑 neighboring labels �
   return ⊕_t alpha[N-1, t]  # 需要遍历最后一列！
   ```
 ]
+  ],
+  [
+    #note[
+  Forward 和 backward 有微妙的不对称性，源于 BOS (beginning of sequence) 存在但 EOS 不显式处理。
+]
 
 关键差异：
 1. *初始化*：Backward 直接 $bold(1)$；Forward 需计算 BOS 转移
 2. *终止*：Backward 返回单值 $beta[0, "BOS"]$；Forward 需 $plus.circle$ 整个最后一列
 3. *循环次数*：Forward 少一次迭代，但初始化更复杂
+  ]
+)
+
+
 
 === Dijkstra 的局限性
 
@@ -407,7 +422,7 @@ Dijkstra 通过剪枝只探索可能最短的路径。对 $max\/min$ 有效，�
 == Structured Perceptron
 
 #grid(
-  columns: (1fr, 1fr),
+  columns: (1.7fr, 1fr),
   gutter: 1.5em,
   [对 CRF 引入 temperature $T$：
     $ p_T(bold(t)|bold(w)) = exp("score"\/T) / Z_T $
@@ -500,7 +515,7 @@ Dijkstra 通过剪枝只探索可能最短的路径。对 $max\/min$ 有效，�
   Ambiguity 在 idempotent semiring 中无影响（$1 or 1 = 1$），但在 real semiring 中需对多条 path sum。
 ]
 
-== Finite-State Transducers
+== Finite-State Transducers (FST)
 
 #definition(title: "FST")[
   Transition 形如 $(q, a, b, w, q')$，$a in Sigma$, $b in Omega$。给定 input $x$，定义 output $y$ 上的条件分布。
@@ -517,15 +532,14 @@ Dijkstra 通过剪枝只探索可能最短的路径。对 $max\/min$ 有效，�
   )
 ]
 
-
 == Transliteration model
 Composition 自动处理 alignment 的sum。
 #grid(
-  columns: (1fr, 1fr, 1fr),
+  columns: (1fr, 0.7fr, 1fr),
   gutter: 1.5em,
   [1. 定义 permissive FST：任意 symbol 可映射到任意 symbol],
 
-  [2. 学习 transition weights],
+  [2. learn transition weights],
 
   [3. Training：最大化 likelihood，*marginalize over latent alignments*],
 )
@@ -562,16 +576,15 @@ Composition 自动处理 alignment 的sum。
   ],
 )
 
-
 与 CRF 版本对比：这里只需 topological order，不再显式遍历 time steps 和 tags。抽象使一切更简单, which is worth it.
 
 == Closed Semiring 与 Kleene Star
 
 #grid(
-  columns: (1fr, 1fr),
+  columns: (1fr, 1.2fr),
   gutter: 1.5em,
   [
-    处理 *cyclic* WFSA 需要 infinite sums。关键工具是 *Kleene star*。
+    处理 *cyclic* WFSA 需要infinite sums, hence需要*Kleene star*。
 
     #definition(title: "Closed Semiring (revisited)")[
       Semiring 称为 *closed* 若存在 Kleene star 运算 $a^*$ 满足：
@@ -582,7 +595,8 @@ Composition 自动处理 alignment 的sum。
     ]
 
     这两条公理看似抽象，实则 geometric series 天然满足：
-    $sum_(n>=0) x^n & = 1 + x dot sum_(n>=0) x^n = 1 + (sum_(n>=0) x^n) dot x$
+
+    $ sum_(n>=0) x^n & = 1 + x dot sum_(n>=0) x^n = 1 + (sum_(n>=0) x^n) dot x$
 
     对 $|x| < 1$，closed form 为 $x^* = 1\/(1-x)$。
   ],
@@ -598,11 +612,9 @@ Composition 自动处理 alignment 的sum。
     在 real semiring 中，这收敛当且仅当 $bold(M)$ 的 *largest eigenvalue $< 1$*。此时：
     $ bold(M)^* = (bold(I) - bold(M))^(-1) $
 
-    这给出 cubic time algorithm（matrix inversion）。但问题是：semiring 没有 minus 和 inverse！
+    这给出 cubic time algorithm（matrix inversion）。但问题是semiring 没有$minus.o$ 和 inverse！
   ],
 )
-
-
 
 == Lehmann's Algorithm
 
@@ -693,11 +705,6 @@ Floyd-Warshall 是 Lehmann's algorithm 在 tropical semiring $chevron.l RR union
     4. $Z = plus.o.big_(q_i in I, q_f in F) lambda(q_i) times.o bold(R)_(i f)^((|Q|)) times.o rho(q_f)$
   ],
 )
-
-
-
-
-
 
 对 transliteration：compose transducers，然后用 Lehmann 计算 $Z$。可 backprop 训练，用 Viterbi semiring 做 inference。
 
@@ -805,9 +812,6 @@ Floyd-Warshall 是 Lehmann's algorithm 在 tropical semiring $chevron.l RR union
   ],
 )
 
-
-
-
 === Ambiguous Grammars
 
 若同一 string 有多于一个 derivation tree，则 grammar 是 ambiguous 的。
@@ -826,7 +830,7 @@ Floyd-Warshall 是 Lehmann's algorithm 在 tropical semiring $chevron.l RR union
   $ forall N in cal(N): sum_(N -> alpha in cal(R)) p(N -> alpha) = 1 $
 ]
 
-问题：PCFG 可能 non-tight（类似 LM 的问题）；可能有 infinite trees for one string。
+问题：PCFG 可能non-tight（类似 LM 的问题）；可能有 infinite trees for one string。
 
 #definition(title: "Weighted CFG (WCFG)")[
   用任意 non-negative weights 替代 probabilities。Globally normalized：
@@ -883,16 +887,11 @@ $
 ]
 
 
-// ---------- 10_constituency_parsing.typ (continued) ----------
 == CKY Algorithm
 
 // === 历史与命名
-
 // CKY = Cocke-Kasami-Younger（有时写 CYK）。三人在 1960s 独立发明——那个年代论文传播慢，同一 algorithm 被多次独立发现很常见。
-
-// #note[
-//   还有第四位作者 Schwartz（Younger 的合作者），是其中最有名的（NYU 数学教授，唯一有 Wikipedia 页面的），但名字反而不在缩写里。
-// ]
+// 还有第四位作者 Schwartz（Younger 的合作者），是其中最有名的（NYU 数学教授，唯一有 Wikipedia 页面的），但名字反而不在缩写里。
 
 此 algorithm 的意义：证明了 *CFL membership 可在 polynomial time 决定*。这在当时是open问题。
 
@@ -1193,8 +1192,6 @@ Jay Earley 进一步证明：对*任意* CFG（非 CNF），可达到 $O(N^3 |G|
 ]
 
 
-
-
 === Weighted CKY 与 Semirings
 
 与 CRF 相同，CKY 可用不同 semirings：
@@ -1398,8 +1395,6 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
   ],
 )
 
-
-
 == Matrix-Tree Theorem
 === Root Convention
 
@@ -1457,13 +1452,7 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
 )
 
 
-
-
-
-
-
 === Complexity 分析与 Extreme Structures
-
 
 #cbox(title: "Arc Scoring Templates")[
   #grid(
@@ -1489,7 +1478,8 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
 
 
 #note[
-  为何 first-order 够用？Neural scoring function（BiLSTM/Transformer）已在 input representation 中编码丰富 context。Arc-factored assumption 作用于 scoring，不限制 representation。
+  为何 first-order 够用？Neural scoring function(BiLSTM/Transformer) 已在 input representation 中encode丰富context。
+  Arc-factored assumption 作用于 scoring，不限制 representation。
   Edge-factored 是"还能做 exact inference"的最强可用假设。
 ]
 
@@ -1652,21 +1642,22 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
 
 
 
-// #cbox(title: "Neural Parser Pipeline (Assignment 5)")[
-//   #table(
-//     columns: (auto, 1fr),
-//     align: (left, left),
-//     stroke: 0.5pt + gray,
-//     inset: 6pt,
-//     [*Step*], [*Description*],
-//     [0], [Data loading (Universal Dependencies format)],
-//     [1], [Tokenization (subword: BPE/WordPiece)],
-//     [2], [Encoding (BiLSTM / Transformer)],
-//     [3], [Arc scoring (MLP: $(bold(h)_i, bold(h)_j) -> "score"(i,j)$)],
-//     [4], [Decoding (CLE for best tree)],
-//     [5], [Training (cross-entropy on gold arcs)],
-//   )
-// ]
+#tip()[
+  Neural Parser Pipeline (Assignment 5)
+  // #table(
+  //   columns: (auto, 1fr),
+  //   align: (left, left),
+  //   stroke: 0.5pt + gray,
+  //   inset: 6pt,
+  //   [*Step*], [*Description*],
+    [0], [Data loading (Universal Dependencies format)],
+    [1], [Tokenization (subword: BPE/WordPiece)],
+    [2], [Encoding (BiLSTM / Transformer)],
+    [3], [Arc scoring (MLP: $(bold(h)_i, bold(h)_j) -> "score"(i,j)$)],
+    [4], [Decoding (CLE for best tree)],
+    [5], [Training (cross-entropy on gold arcs)],
+  
+]
 
 === 与 CRF 的结构对比
 
@@ -2817,7 +2808,9 @@ Attention 解决 fixed-length bottleneck：允许 decoder 在每一步 *动态�
 
 
 === 整体结构
-Transformer Encoder Block 图略
+#quote()[
+  Transformer Encoder Block 图略
+]
 
 === 关键组件
 
@@ -3009,19 +3002,22 @@ $ V^((p)) = "argmin" {V' subset V : sum_(w in V') P(w | bold(y)_(< t), bold(x)) 
   其中：$c$ = 候选长度，$r$ = 参考长度，$w_n = 1\/N$（通常 $N=4$）;\
   $p_n$：$n$-gram precision（预测中出现在 reference 的比例）; $"BP"$：brevity penalty，惩罚过短翻译
 
-
 ]
 
-*Clipped Count*：防止重复词刷分
-$ "count"_"clip"("the") = min("count"_"pred"("the"), max_"ref" "count"_"ref"("the")) $
-
-#note[
-  *BLEU 家族*：ROUGE（摘要）：Recall-oriented; METEOR：考虑同义词、词干; chrF：字符级 $n$-gram.
-  现代趋势：NN评估（BERTScore）+ 人类评估（仍是金标准）
-]
-
-局限性：BLEU 只是 proxy metric。MT evaluation 仍是 open problem: 只看词重叠，忽略语义（"not good" vs. "bad"）; 对改写、同义替换不友好; 需要高质量参考译文
-
+#grid(
+  columns:(1.5fr,1fr),
+  [
+      *Clipped Count*：防止重复词刷分
+      $ "count"_"clip"("the") = min("count"_"pred"("the"), max_"ref" "count"_"ref"("the")) $
+      局限性：BLEU 只是 proxy metric。MT evaluation 仍是 open problem: 只看词重叠，忽略语义（"not good" vs. "bad"）; 对改写、同义替换不友好; 需要高质量参考译文
+  ],
+  [
+      #note[
+        *BLEU 家族*：ROUGE（摘要）：Recall-oriented; METEOR：考虑同义词、词干; chrF：字符级 $n$-gram.
+        现代趋势：NN评估（BERTScore）+ 人类评估（仍是金标准）
+      ]
+  ]
+)
 
 = Axes of Modelling
 
@@ -3297,58 +3293,77 @@ Two目标常冲突：
 
 === Cross-Validation
 
-#definition(title: "K-Fold Cross-Validation")[
+#grid(
+  columns: (2fr, 1fr),
+
+  [#definition(title: "K-Fold Cross-Validation")[
   1. 将数据随机分为 $K$ 份（folds）。
   2. *Iteration*: 循环 $K$ 次，每次取第 $k$ 份作为 Test/Validation Set，其余 $K-1$ 份作为 Training Set。
   3. *Aggregation*: 报告 $K$ 次结果的 mean $pm$ std。
-]
-
+]],[
 #tip[exm21b中：test set size： $N / K quad$; training set size: $N times (K-1)/K quad$; total model created: $K$(必须完整跑完每一折)]
+]
+)
 
-用途区分：
-- Model Assessment: 用于评估模型泛化能力（此时留出份为 Test Set）。
-- Model Selection: 用于超参数调优（此时留出份为 Validation Set）。
+#grid(
+  columns: (1fr,1fr),
+  [
+    用途区分：
+    - Model Assessment: 用于评估模型泛化能力（此时留出份为 Test Set）。
+    - Model Selection: 用于超参数调优（此时留出份为 Validation Set）。
 
-Nested CV (嵌套交叉验证)：用于同时进行调参和无偏评估。
-- Inner Loop: Model Selection。在训练集中再次做 CV 来寻找最佳超参数。
-- Outer Loop: Model Assessment。使用 Inner Loop 选出的最佳参数，在外层 Test fold 上评估泛化误差。
-- 稳定性检测: 若外层不同 fold 选出的最佳参数差异巨大，说明模型不稳定或数据过少。
+  ],
+  [
+    Nested CV (嵌套交叉验证)：用于同时进行调参和无偏评估。
+    - Inner Loop: Model Selection。在训练集中再次做 CV 来寻找最佳超参数。
+    - Outer Loop: Model Assessment。使用 Inner Loop 选出的最佳参数，在外层 Test fold 上评估泛化误差。
+    - 稳定性检测: 若外层不同 fold 选出的最佳参数差异巨大，说明模型不稳定或数据过少。
+  ]
+)
 
 === Statistical Significance Testing
 
-问题：Model A 比 B 好 2%，是真实差异还是随机噪声？
-- Multiple Testing Problem：若比较 20 个model，$alpha = 0.05$ 时期望有 1 个 false positive。
-- Bonferroni Correction：比较 $m$ 个model时，使用 $alpha' = alpha / m$。
+#grid(
+  columns: (1fr,1fr),
+  [
+    问题：Model A 比 B 好 2%，是真实差异还是随机噪声？
+    - Multiple Testing Problem：若比较 20 个model，$alpha = 0.05$ 时期望有 1 个 false positive。
+    - Bonferroni Correction：比较 $m$ 个model时，使用 $alpha' = alpha / m$。
 
-常用*检验*：
-- Parametric：paired t-test（假设正态分布）
-- Non-parametric：McNemar test, permutation test（无分布假设）
-
+  ],
+  [
+    常用*检验*：
+    - Parametric：paired t-test（假设正态分布）
+    - Non-parametric：McNemar test, permutation test（无分布假设）
+  ]
+)
 
 === McNemar's Test
 标准 t-test 假设数据服从 normal/t 分布——textual data 通常不满足。因此 NLP 常用 *non-parametric tests*：无需指定 parametric family。
 #definition(title: "McNemar's Test")[
   用于比较 *两个 classifiers* 在同一数据集上的表现。
-
-  构造 contingency table：
-  #figure(
-    table(
-      columns: 3,
-      align: center,
-      stroke: 0.5pt + gray,
-      inset: 6pt,
-      [], [Model B Correct], [Model B Wrong],
-      [Model A Correct], [$n_(00)$], [$n_(01)$],
-      [Model A Wrong], [$n_(10)$], [$n_(11)$],
-    ),
+  #grid(
+    columns: (1fr,1fr),
+    [
+        构造 contingency table：
+        #figure(
+          table(
+            columns: 3,
+            align: center,
+            stroke: 0.5pt + gray,
+            inset: 6pt,
+            [], [Model B Correct], [Model B Wrong],
+            [Model A Correct], [$n_(00)$], [$n_(01)$],
+            [Model A Wrong], [$n_(10)$], [$n_(11)$],
+          ),
+        )
+    ],
+    [
+      *Insight*：只关注 *disagreement cells* $n_(01), n_(10)$（两模型都对/都错的样本不提供区分信息）。
+      Test statistic,  $H_0$：两 classifier 性能相同。要求 $n_(01) + n_(10) >= 25$。：
+      $ chi^2 = ((|n_(01) - n_(10)| - 1)^2) / (n_(01) + n_(10)) $
+    ]
   )
-
-  *Insight*：只关注 *disagreement cells* $n_(01), n_(10)$（两模型都对/都错的样本不提供区分信息）。
-
-  Test statistic：
-  $ chi^2 = ((|n_(01) - n_(10)| - 1)^2) / (n_(01) + n_(10)) $
-
-  $H_0$：两 classifier 性能相同。要求 $n_(01) + n_(10) >= 25$。
 ]
 
 
