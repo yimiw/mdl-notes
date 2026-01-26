@@ -42,12 +42,12 @@
     若原algo计算 $Z = sum_(bold(y)) product_n exp "score"(y_n)$，则 semiringified 版本计算：
     $ plus.o.big_(bold(y)) times.o.big_n exp "score"(y_n) $
 
-    这之所以可行，是因为我们只需 associativity、commutativity (for $plus.o$)和 distributivity。
-    // 我们要 *minimize assumptions*：dynamic programming 只需要 associativity/commutativity/distributivity/identity/annihilator。extra结构（inverse、subtraction、division）不但不必要，还会限制适用范围。
+    这之所以可行，是因为我们只需#footnote[
+      minimize assumptions的考量：dynamic programming 只需要 associativity/commutativity/distributivity/identity/annihilator。extra结构（inverse、subtraction、division）不但不必要，还会限制适用范围。
+    ] associativity、commutativity (for $plus.o$)和 distributivity。
 
 
     == 常用 Semirings 速查
-
 
     #figure(
       table(
@@ -72,7 +72,7 @@
         [Viterbi], [$RR union {-infinity}$], [$max$], [$+$], [$-infinity$], [$0$],
         [Log],
         [$RR union {pm infinity}$],
-        [$"lse"$#footnote[其中$"lse"(x,y) = log(e^x + e^y)$. *Log-Sum-Exp Trick*: 若$x >= y$，则
+        [$"lse"$#footnote[其中$"lse"(x,y) = log(e^x + e^y)$. `Log-Sum-Exp` Trick: 若$x >= y$，则
             $log(e^x + e^y) = x + log(1 + e^(y-x))$因 $y-x <= 0$，故 $e^(y-x) <= 1$，数值稳定。Motiv是计算 $log(e^x + e^y)$ 时，直接 $exp$ 会 overflow。所有神经网络库都实现了 `logsumexp`,如`torch.logsumexp(log_probs, dim=...)`。]],
         [$+$],
         [$-infinity$],
@@ -114,9 +114,9 @@
   ],
 )
 
-#warning[
-  *考试高频题型*：判断给定结构是否是 monoid/semiring。TA 强调这类题"fast, easy to check, shows understanding"。
-]
+// #warning[
+//   *考试高频题型*：判断给定结构是否是 monoid/semiring。TA 强调这类题"fast, easy to check, shows understanding"。
+// ]
 
 #grid(
   columns: (1fr, 1fr),
@@ -152,11 +152,22 @@
   [
     === Semiring 判定清单
 
-    除 monoid 条件外，还需：
-    1. $chevron.l bb(K), plus.circle, bold(0) chevron.r$ 是 *commutative* monoid
-    2. $chevron.l bb(K), times.circle, bold(1) chevron.r$ 是 monoid
-    3. *Distributivity*：$a times.circle (b plus.circle c) = (a times.circle b) plus.circle (a times.circle c)$
-    4. *Annihilation*：$bold(0) times.circle a = a times.circle bold(0) = bold(0)$
+    给定 $chevron.l bb(K), plus.o, times.o, bold(0), bold(1) chevron.r$，按以下四条逐一验证：
+
+    #figure(
+      table(
+        columns: 2,
+        inset: 6pt,
+        align: (center, left),
+        fill: (x, y) => if y == 0 { rgb("#F5F3FF") } else { none },
+        [*Check*], [*条件*],
+        [#text(fill: rgb("#cea53c"))[*$plus.o$*monoid]], [$chevron.l bb(K), plus.o, bold(0) chevron.r$ 是 *commutative* monoid],
+        [#text(fill: rgb("#111cec"))[*$times.o$* monoid]], [$chevron.l bb(K), times.o, bold(1) chevron.r$ 是 monoid],
+        [#text(fill: rgb("#32CD32"))[*分配律*]], [$(x plus.o y) times.o z = (x times.o z) plus.o (y times.o z)$ 且 $x times.o (y plus.o z) = (x times.o y) plus.o (x times.o z)$],
+        [#text(fill: rgb("#FF1493"))[*吸收元*]], [$bold(0) times.o x = x times.o bold(0) = bold(0)$],
+      ),
+      caption: [Semiring 判定 Checklist],
+    )
 
     #figure(
       table(
@@ -176,17 +187,15 @@
 )
 
 
-
-
 #note[
   #grid(
     columns: (2fr, 3fr),
     gutter: 1em,
     [
       *关键陷阱*：$bold(0) = bold(1)$ 时必然失败。因为：
-      - $a times.circle bold(0) = bold(0)$（annihilation）
-      - $a plus.circle bold(0) = a$（identity）
-      - 若 $bold(0) = bold(1)$，则 $a times.circle bold(1) = bold(0)$，但应有 $a times.circle bold(1) = a$
+      - $a times.o bold(0) = bold(0)$（annihilation）
+      - $a plus.o bold(0) = a$（identity）
+      - 若 $bold(0) = bold(1)$，则 $a times.o bold(1) = bold(0)$，但应有 $a times.o bold(1) = a$
     ],
     [
       *Distributivity 检验*：$min(1, 2) + 3 = 4$，但 $min(1+3, 2+3) = 4$？✅
@@ -198,28 +207,25 @@
 
 == Closed Semiring 与inftysum
 
-#note[
-  #grid(
-    columns: (2fr, 3fr),
-    gutter: 1em,
-    [
-     #definition(title: "Closed Semiring")[
-      增设 *Kleene star* 运算：$a^* = plus.o.big_(n=0)^infinity a^(times.o n)$，满足：
-      $ a^* = bold(1) plus.o a times.o a^* = bold(1) plus.o a^* times.o a $
-    ]
-    ],
-    [ 
-    对 real semiring 在 $(-1,1)$ 上：$a^* = sum_(n>=0) a^n = 1/(1-a)$（geometric series）。这是 globally normalized language model 的理论基础。
-    ],
-  )
-]
+#grid(
+  columns: (2fr, 1fr),
+  gutter: 1em,
+  [
+    #definition(title: "Closed Semiring")[
+    增设 *Kleene star* 运算：$a^* = plus.o.big_(n=0)^infinity a^(times.o n)$，满足：
+    $ a^* = bold(1) plus.o a times.o a^* = bold(1) plus.o a^* times.o a $
+  ]
+  ],
+  [ 
+  #note[对 real semiring 在 $(-1,1)$ 上：$a^* = sum_(n>=0) a^n = 1/(1-a)$（geometric series）。这是 globally normalized language model 的理论基础。]
+  ],
+)
 
 
 
+== DP的代数推导
 
-== 动态规划的代数推导
-
-#warning[*考点*：Ryan明确说这是"fundamental slide"，历年必考。]
+// #warning[*考点*：Ryan明确说这是"fundamental slide"，历年必考。]
 
 目标：计算 $Z(bold(w)) = sum_(bold(t) in cal(T)^N) exp "score"(bold(t), bold(w))$
 
