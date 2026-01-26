@@ -224,7 +224,7 @@
 目标：计算 $Z(bold(w)) = sum_(bold(t) in cal(T)^N) exp "score"(bold(t), bold(w))$
 
 *Step 1*：假设 score 可加分解
-$ "score"(bold(t), bold(w)) = sum_(n=1)^N "score"(chevron.l t_(n-1), t_n chevron.r, bold(w), n) $
+$ "score"(bold(t), bold(w)) = sum_(n=1)^N "score"(chevron.l t_(n-1), t_n chevron.r, bold(w)) $
 
 *Step 2*：代数变换
 $
@@ -398,8 +398,6 @@ Dijkstra 通过剪枝只探索可能最短的路径。对 $max\/min$ 有效，�
 )
 
 
-
-
 == Structured Perceptron
 
 #grid(
@@ -413,14 +411,10 @@ Dijkstra 通过剪枝只探索可能最短的路径。对 $max\/min$ 有效，�
 
   [其中 $arg max$ 由 Viterbi 计算。
 
-    #note[Collins (2002) EMNLP best paper。在我们的框架下只需一行推导。]],
+    #note[Collins (2002) /*EMNLP best paper。*/在我们的框架下只需一行推导。]],
 )
 
 
-
-
-
-// ---------- 08_wfsa_wfst.typ ----------
 = Weighted Finite-State Automata <sec:wfsa>
 
 == 动机：Transliteration
@@ -701,17 +695,19 @@ Floyd-Warshall 是 Lehmann's algorithm 在 tropical semiring $chevron.l RR union
 
 对 transliteration：compose transducers，然后用 Lehmann 计算 $Z$。可 backprop 训练，用 Viterbi semiring 做 inference。
 
-// ---------- 10_constituency_parsing.typ ----------
 
 = Constituency Parsing <sec:constituency_parsing>
 
 == Syntax 与 Hierarchical Structure
 
-*Syntax* 是 sentence structure 的数学研究，或曰 word order 的研究。核心事实：
-
-#note[
-  *Language is structured hierarchically.* 这是 overwhelming evidence 支持的事实，非假设。
-]
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [*Syntax* 是 sentence structure 的数学研究，或曰 word order 的研究。Core fact: _*Language is structured hierarchically.*_],
+  [#note[
+   这是 overwhelming evidence 支持的事实，非假设。
+]],
+)
 
 === Constituency
 
@@ -763,7 +759,7 @@ Floyd-Warshall 是 Lehmann's algorithm 在 tropical semiring $chevron.l RR union
 #note[
   Clefting 可消解歧义：
   - "It is *the fruit* that flies like a green banana" — 只保留解读 2
-  - 这说明 syntactic operations 作用于 tree structure，而非 string
+  - 这说明 syntactic operations 作用于 *tree* structure，而非 string
 ]
 
 === 与 Programming Languages 对比
@@ -797,6 +793,8 @@ Floyd-Warshall 是 Lehmann's algorithm 在 tropical semiring $chevron.l RR union
       - 它是解释 linguistic data 的工具，非大脑中真实存在的结构
       - Tree annotations 是某人的 modelling choice
       - 切勿将 treebank 视为"ground truth"
+
+    CRF的$cal(R)$因语种而异，且CRF无法处理*Cross-serial*, hence引出CCG, which将word变为“带类型的函数”, hence无需将无限规则引入CFG中。
     ]
   ],
 )
@@ -818,7 +816,7 @@ Floyd-Warshall 是 Lehmann's algorithm 在 tropical semiring $chevron.l RR union
 == Probabilistic & Weighted CFGs
 
 #definition(title: "PCFG")[
-  五元组 $chevron.l cal(N), S, Sigma, cal(R), p chevron.r$，其中 $p: cal(R) -> [0,1]$ 是 locally normalized distribution：
+  五元组 $chevron.l cal(N), S, Sigma, cal(R), p chevron.r$，其中 $p: cal(R) -> [0,1]$ 是 locally normalized distribution, $alpha in (cal(N) union Sigma)^star$：
   $ forall N in cal(N): sum_(N -> alpha in cal(R)) p(N -> alpha) = 1 $
 ]
 
@@ -827,7 +825,7 @@ Floyd-Warshall 是 Lehmann's algorithm 在 tropical semiring $chevron.l RR union
 #definition(title: "Weighted CFG (WCFG)")[
   用任意 non-negative weights 替代 probabilities。Globally normalized：
   $
-    p(bold(t) | bold(w)) = (exp "score"(bold(t), bold(w))) / (sum_(bold(t)': "yield"(bold(t)') = bold(w)) exp "score"(bold(t)', bold(w)))
+    p(bold(t) | bold(w)) = (exp "score"(bold(t), bold(w))) \/ (sum_(bold(t)': "yield"(bold(t)') = bold(w)) exp "score"(bold(t)', bold(w)))
   $
 ]
 
@@ -890,7 +888,7 @@ $
 //   还有第四位作者 Schwartz（Younger 的合作者），是其中最有名的（NYU 数学教授，唯一有 Wikipedia 页面的），但名字反而不在缩写里。
 // ]
 
-此 algorithm 的意义：证明了 *CFL membership 可在 polynomial time 决定*。这在当时是开放问题。
+此 algorithm 的意义：证明了 *CFL membership 可在 polynomial time 决定*。这在当时是open问题。
 
 === 为何需要 CKY？
 
@@ -906,7 +904,7 @@ Jay Earley 进一步证明：对*任意* CFG（非 CNF），可达到 $O(N^3 |G|
 //   *趣闻*：Earley 后来转行做婚姻心理咨询。他的网站写满心理学资质，最后一段才提到"曾是 CS 教授，写了该领域 10 篇最高引论文中的 5 篇"。
 // ]
 
-=== Algorithm 核心思想
+=== CKY Algorithm思想
 
 *Span*：sentence 的 contiguous substring，如 "like a green" 在 "fruit flies like a green banana" 中。
 
@@ -942,9 +940,9 @@ Jay Earley 进一步证明：对*任意* CFG（非 CNF），可达到 $O(N^3 |G|
 ]
 === CKY 详细示例
 
-#warning[
-  *考试常见*：手工填写 CKY chart。TA 强调"做 3-4 遍就记住了"。
-]
+// #warning[
+//   *考试常见*：手工填写 CKY chart。TA 强调"做 3-4 遍就记住了"。
+// ]
 
 #cbox(title: "CKY Chart 索引")[
   #grid(
@@ -1343,7 +1341,7 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
     )
   ],
   [
-    #warning[
+    #tip[
       *易混淆点*：
       - *无向图*的Cayley公式：$n^(n-2)$ 棵生成树
       - *有向图+固定root*：$n^(n-2)$ 棵arborescence（root指向外的树）
@@ -1356,11 +1354,11 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
   ],
 )
 
-#cbox(title: "公式直觉：为何是 $n^(n-2)$？")[
-  对完全有向图，固定node1为root：
+#cbox(title: "公式直觉")[
+  对完全有向图，固定node1为root, 为何是 $bold(n^(n-2))$？
   
   - 剩余 $n-1$ 个非根node，每个必须选择1个parent（从n个node中选）
-  - *朴素配置*：每个非根node有 $n-1$ 种parent选择 → $(n-1)^(n-1)$ 种
+  - 朴素配置：每个非根node有 $n-1$ 种parent选择 → $(n-1)^(n-1)$ 种
   - 但很多配置会产生*环*或*森林*（不连通）
   
   *MTT保证*：无环树的数量恰好是 $n^(n-2)$
@@ -2015,7 +2013,7 @@ Lambda calculus (Church, 1932) 是 computation 的形式化model，与 Turing ma
     ]
 
     #warning[
-      Ryan明确说会考 beta reduction。给定 Lambda expression，simplify it（反复 apply α-conversion 和 $beta$-reduction 直到无法继续）。TA也在tutorial中强调了至少是10分题。
+      Ryan明确说会考 $beta$-reduction。给定 Lambda expression，simplify it（反复 apply α-conversion 和 $beta$-reduction 直到无法继续）。TA也在tutorial中强调了至少是10分题。
     ]
   ],
 )
