@@ -1325,7 +1325,50 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
 
 目标：给定 sentence $bold(w)$，定义 spanning trees 上的 distribution。
 
-问题规模：$N$ 个 nodes 的 directed spanning trees 数量是 $(N-1)^(N-2)$（Cayley's formula 的 directed 版本）——比 parse trees 的 Catalan number 还大。
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    === Cayley公式的Directed版本
+
+    #table(
+      columns: (auto, auto, auto),
+      align: (left, center, left),
+      stroke: 0.5pt + gray,
+      inset: 6pt,
+      [*Graph Type*], [*Root约束*], [*num of tree*],
+      [无向完全图 $K_n$], [无root], [$n^(n-2)$],
+      [有向完全图 $K_n$], [固定某node为root], [$n^(n-2)$],
+      [有向完全图 $K_n$], [不固定root], [$n^(n-1)$],
+    )
+  ],
+  [
+    #warning[
+      *易混淆点*：
+      - *无向图*的Cayley公式：$n^(n-2)$ 棵生成树
+      - *有向图+固定root*：$n^(n-2)$ 棵arborescence（root指向外的树）
+      - *有向图+任意root*：$n^(n-1) = n times n^(n-2)$ 棵
+      
+      *考试Hint常见形式*："625 trees on 5 nodes" = $5^4 = 5 times 5^3$
+      
+      拆解：5种root选择 × 125种固定root后的树结构
+    ]
+  ],
+)
+
+#cbox(title: "公式直觉：为何是 $n^(n-2)$？")[
+  对完全有向图，固定node1为root：
+  
+  - 剩余 $n-1$ 个非根node，每个必须选择1个parent（从n个node中选）
+  - *朴素配置*：每个非根node有 $n-1$ 种parent选择 → $(n-1)^(n-1)$ 种
+  - 但很多配置会产生*环*或*森林*（不连通）
+  
+  *MTT保证*：无环树的数量恰好是 $n^(n-2)$
+  
+  //这不是巧合——行列式计算自动排除了所有非法配置！
+]
+
+问题规模：$N$ 个 nodes 的 dependency trees（允许任意结构）数量可达 $N^(N-1)$——远超 parse trees 的 Catalan number $C_N = O(4^N / N^(3/2))$。
 
 === Edge Factorization
 
@@ -1361,7 +1404,7 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
   gutter: 1em,
   [
     #note[
-      Dependency tree 引入 external root node（不在 sentence 内），有一条 arc 指向 sentence 的 syntactic head（通常是 main verb）。这让 root choice 也变成普通的 edge choice。
+      Dependency tree 引入 external 根node（不在 sentence 内），有一条 arc 指向 sentence 的 syntactic head（通常是 main verb）。这让 root choice 也变成普通的 edge choice。
     ]
   ],
   [两种等价写法：
@@ -1448,8 +1491,6 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
 
 === MTT 证明结构与 Sanity Checks
 
-
-
 #tip[Assignment 5的证明路线图
   #grid(
     columns: (1fr, 1fr),
@@ -1508,6 +1549,36 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
     [*3.* Partition function：\ $Z(bold(w)) = det(bold(L))$],
   )
 ]
+=== Cayley公式的变体
+
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    #definition(title: "完全图生成树计数")[
+      设完全图 $K_n$ 有 $n$ node, edge set为所有可能的连接, $r$ 是指定的根node
+      
+      *无向情况*（Cayley, 1889）：
+      $ "SpanningTrees"(K_n) = n^(n-2) $
+      
+      *有向情况+固定root*（MTT特例）：
+      $ "Arborescences"(K_n, r) = n^(n-2) $
+      
+      *有向情况+任意root*（组合）：
+      $ "Arborescences"(K_n) = n times n^(n-2) = n^(n-1) $
+    ]
+  ],
+  [
+    #note[
+        *记忆口诀*：
+        - *Fixed $rho$*：公式用 $bold(n^(n-2))$（总node数的幂）
+        - *Unfixed root*：公式用 $n^(n-1)$（等于 $n$ 种root选择 × $n^(n-2)$）
+        - *MTT*：直接给出 $det(bold(L))$，自动处理无环约束
+        ]
+  ],
+)
+
+
 === Chu-Liu-Edmonds 详解
 
 #grid(
@@ -1516,7 +1587,7 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
   [
     #algorithm(title: [CLE Hand-Run Checklist])[
       *Repeat until no cycle*:
-      1. Greedy step：对每个 non-root node，选 highest incoming arc
+      1. Greedy step：对每个 non-根node，选 highest incoming arc
       2. Cycle detection：检查 greedy graph 是否有 cycle
       3. If no cycle：done
       4. If cycle exists：
@@ -1528,9 +1599,9 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
   ],
   [
     #cbox(title: "Reweighting 公式")[
-      设 cycle $C$ 内节点 $v$ 的 best incoming arc 权重为 $w_v$。
+      设 cycle $C$ 内node $v$ 的 best incoming arc 权重为 $w_v$。
 
-      对外部节点 $u$ 到 $v in C$ 的 arc：
+      对外部node $u$ 到 $v in C$ 的 arc：
       $ "new\_weight"(u, v) = "weight"(u, v) - w_v $
 
       直觉：选择 $(u, v)$ 意味着放弃 $v$ 在 cycle 内的 arc。Reweight 确保 total cost 正确。
@@ -1661,10 +1732,14 @@ $ "eats" = lambda y. lambda x. "Eats"(x, y) $
       *魔法公式*：整个 normalizer 就是一个 matrix determinant。这不是 dynamic program，而是 linear algebra。
 
       *Semiring 问题*：Determinant 需要 *subtraction*（Laplacian 定义中有负号）。若没有 subtraction，需 exponential time。这就是为何无法 semiringify。
+
+      *公式回顾*：
+        - *配分函数*：$Z(bold(w)) = det(bold(L))$
+        - *完全图特例*：若所有 $bold(A)_(i j) = w$（常权重），则 $Z = n^(n-2) times w^(n-1)$
+        - *Exam trick*：先判断是否为完全图，若是则直接套Cayley公式验证答案
     ]
   ],
 )
-
 
 
 == Inference: Chu-Liu-Edmonds Algorithm
@@ -1688,7 +1763,7 @@ Kruskal's algorithm（greedy add edges，不成 cycle）对 *undirected* minimum
 Chu-Liu-Edmonds (1965) / Edmonds (1967)：
 
 #algorithm(title: [Chu-Liu-Edmonds])[
-  1. *Greedy graph*：每个 non-root node 选 highest incoming edge
+  1. *Greedy graph*：每个 non-根node 选 highest incoming edge
   2. *If* no cycle: done（greedy graph 即 optimal）
   3. *If* cycle exists:
     - *Contract* cycle 成单个 node
