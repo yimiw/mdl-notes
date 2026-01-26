@@ -179,11 +179,23 @@
 
   // pagebreak()
 
-  outline(
-    title: [目录 / Contents],
-    depth: 3,
-    indent: auto,
-  )
+  // 新目录部分（双栏紧凑版）
+{
+  // 样式覆盖
+  show outline.entry: it => {
+    set text(size: 0.9em, fill: black)
+    v(0.45em, weak: true)
+    it
+  }
+  // 多栏布局
+  columns(3, gutter: 1em)[
+    #outline(
+      title: [目录 / Contents],
+      depth: 3,
+      indent: 1em,
+    )
+  ]
+}
 
   // pagebreak()
 

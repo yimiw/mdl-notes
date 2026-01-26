@@ -240,7 +240,7 @@ $
   答：complexity变为 $O(N |cal(T)|^3)$——多一层 for 循环，推导同理。
 ]
 
-// ---------- 07_part_of_speech_tagging.typ ----------
+
 = Part-of-Speech Tagging <sec:pos-tagging>
 
 #cbox(title: "Figure: POS Graph")[
