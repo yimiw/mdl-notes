@@ -127,6 +127,11 @@
   columns: (1fr, 1fr),
   gutter: 1em,
   [
+    == Semiring 意义：
+    - $plus.o$ (OR, MAX, +): 在DP中对应*==分治==*(split points的合并)
+    - $times.o$ (AND, $times$,)在DP中对应*==连接==* e.g. 左右子树的组合，沿hypergraph边传递
+    - $bold(0)$: 吸收元, 消除invalid结构;  $bold(1)$: 单位元, null结构不破坏整体
+
     === Monoid 判定
     Monoid 判定练习如@fig:exs-monoid-table, Monoid必须满足：
     + *Closure*：$a times.o b in bb(K)$（operation 封闭）;
@@ -218,7 +223,7 @@
   [
     #definition(title: "Closed Semiring")[
     *Kleene star* 运算：$a^* = plus.o.big_(n=0)^infinity a^(times.o n)$，满足：
-    
+
     $ a^* = bold(1) plus.o a times.o a^* = bold(1) plus.o a^* times.o a $
   ]
   ],
