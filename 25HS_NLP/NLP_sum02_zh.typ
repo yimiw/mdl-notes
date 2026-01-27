@@ -306,7 +306,7 @@ CRF 是 structured labeling 的 conditional model，考虑 neighboring labels �
   complexity $O(N |cal(T)|^2)$。Forward algorithm 方向相反，形式对称。
 ] <alg:backward>
 
-结构上等价于 backpropagation（都是 DAG 上的路径sum）。
+结构上等价于 backpropagation（都是 DAG 上的路径sum）。直觉：「forward计算prefix之和」，计算由seq开头走到当前时刻t状态共多少种走法（计算所有种走法的socre总和）。
 
 === Forward vs Backward 实现细节
 
@@ -2019,15 +2019,6 @@ Lambda calculus (Church, 1932) 是 computation 的形式化model，与 Turing ma
   ],
 )
 
-
-
-
-
-
-
-
-
-
 === Lambda Calculus实战
 
 #note[
@@ -2082,11 +2073,6 @@ Lambda calculus (Church, 1932) 是 computation 的形式化model，与 Turing ma
     ]
   ],
 )
-
-
-
-
-
 
 === First-Order Logic 翻译
 
@@ -2215,10 +2201,6 @@ Lambda calculus (Church, 1932) 是 computation 的形式化model，与 Turing ma
     ]
   ],
 )
-
-
-
-
 
 === Linear Indexed Grammar 构造策略
 

@@ -33,15 +33,15 @@
 
 = 1. Backpropagation
 
-#cbox(title: [Chain Rule])[
+#cbox(title: [Chain])[
   $d/(d x)[f(g(x))]=f'(g(x))g'(x)$
   *Jacobian*: $f: RR^n -> RR^m$, $(d y)/(d x)=[(d y)/(d x_1),...,(d y)/(d x_n)] in RR^(m times n)$
   *Multivar*: $(d y_i)/(d x_j)=sum_(k=1)^m (d y_i)/(d z_k)(d z_k)/(d x_j)$
 ]
 
-#cbox(title: [Bauer Path Formula])[
+#cbox(title: [Bauer Path])[
   $(d y_i)/(d x_j)=sum_(p in cal(P)(j,i)) product_((k,l) in p) (d z_l)/(d z_k)$
-  $cal(P)(j,i)$=all paths $j->i$; worst $O(m^n)$
+  $cal(P)(j,i)$=all paths $j->i$; worst $O(m^n)$, $m$平均出度, $n$路径长度
   *Computation Graph*: DAG w/ function nodes, edges=variable flow
 ]
 
@@ -231,7 +231,7 @@
     [$1$],
     [可达性/存在性],
 
-    [Counting],
+    [*Counting*],
     [$NN$],
     [$+$],
     [$times$],
@@ -245,18 +245,10 @@
     [$+$],
     [$infinity$],
     [$0$],
-    [最短路/编辑距离],
+    [最短路/编辑dist],
   )
 ]
-// #cbox(title: [Semirings])[
-//   $(plus.o,overline(0))$: comm. monoid; $(times.o,overline(1))$: monoid
-//   $times.o$ dist over $plus.o$; $overline(0) times.o a=overline(0)$
-//   *Boolean*: $chevron.l{0,1},"or","and",0,1 chevron.r$ (logical)
-//   *Viterbi*: $chevron.l[0,1],max,times,0,1 chevron.r$ (best deriv)
-//   *Inside*: $chevron.l RR^+,+,times,0,1 chevron.r$ (prob of string)
-//   *Tropical*: $chevron.l RR^+,min,+,infinity,0 chevron.r$ (shortest dist)
-//   *Counting*: $chevron.l NN,+,times,0,1 chevron.r$ (\#paths)
-// ]
+
 #cbox(title: [Semiring Definition])[
   $angle.l bb(K),plus.o,times.o,bold(0),bold(1) angle.r$ where:
   1. $(bb(K),plus.o,bold(0))$: *comm monoid* (assoc+comm+identity)
@@ -273,15 +265,11 @@
 
 #cbox(title: [Monoid判定])[
   1. *Closure*: $a times.o b in bb(K)$; 2. *Assoc*: $(a times.o b) times.o c=a times.o (b times.o c)$; 3. *Identity*: $exists bold(e): a times.o bold(e)=bold(e) times.o a=a$
-  // *陷阱*: 减法不assoc; identity须在集合内
-  // $angle.l NN,+,0 angle.r$✓; $angle.l ZZ,-,0 angle.r$✗(不assoc)
-  // $angle.l Sigma^*,"concat",epsilon angle.r$✓(非交换!)
 ]
 
 #cbox(title: [Semiring判定])[
-  1. $plus.o$-monoid (comm): $a plus.o b=b plus.o a$ ; 2. $times.o$-monoid; 3. Distributivity (左右皆需); 4. Annihilation: $bold(0) times.o x=bold(0)$
+  1.$plus.o$-monoid (comm): $a plus.o b=b plus.o a$ ; 2. $times.o$-monoid; 3. Distributivity (左右皆需); 4. Annihilation: $bold(0) times.o x=bold(0)$
   *陷阱*: $bold(0)=bold(1)$必失败!
-  // $angle.l RR_(>=0),max,+,0,0 angle.r$✗ ($bold(0)=bold(1)$矛盾)
 ]
 
 #cbox(title: [Closed Semiring & Kleene\*])[
@@ -425,8 +413,9 @@
 ]
 
 #cbox(title: [Lehmann algo])[
-  *Generalized FW*适用_any closed semiring_:
-  $W[i][j] <- W[i][j] plus.o (W[i][k] times.o W[k][k]^* times.o W[k][j])$
+  *Generalized FW*适用_any closed semiring_: 新dist=$min$(旧dist,去k的dist+在k转圈的代价+从k离开的dist).
+  $ W^((k))_(i j ) = W^((k-1))_(i j ) plus.o ( W^((k-1))_(i k ) times.o (W^((k-1))_(k k ))^star times.o W^((k-1))_(k j )) $
+  $ W[i][j] <- W[i][j] plus.o (W[i][k] times.o( W[k][k])^* times.o W[k][j]) $
   *Kleene Star* $W[k][k]^*$: self-loop at $k$ any \# times
   - Tropical: $(W[k][k])^*=0$ (positive cycle doesn't help)
   - Inside: $(W[k][k])^*=1/(1-W[k][k])$ (geometric series)
@@ -436,7 +425,7 @@
 #cbox(title: [Kleene Star])[
   $a^*=plus.o.big_(n=0)^infinity a^(times.o n)=bold(1) plus.o a times.o a^*$
   *Closed semiring*: $a^*$ always exists
-  Real $|a|<1$: $a^*=1+a+a^2+...=1/(1-a)$
+  Real $|a|<1$: $a^*=1/(1-a)$
 ]
 
 #cbox(title: [Normalization Constant Z])[
@@ -508,7 +497,7 @@
   Independence assumptions control complexity
 ]
 
-#cbox(title: [Loss & Regularization])[
+#cbox(title: [正则化])[
   *LogLoss*: $ell(y,y')=log(1+e^(-y dot y'))$
   *Exp-Loss*: $ell(y,y')=e^(-y dot y')$
   *L1/L2*: weight penalties (Laplace/Gaussian prior)
@@ -559,6 +548,140 @@
   *Social Contract*: natural equality
   *Anti-subordination*: positive discrimination for equality
 ]
+
+= 13. Algo Details & Exam Patterns
+
+#cbox(title: [Key Formulas Checklist])[
+  *Log-Linear Z*: $Z(theta)=sum_(y' in Y)exp(theta dot f(x,y'))$
+  *Markov*: $P(t_i|t_(1:i-1))=P(t_i|t_(i-1))$ (1st order)
+  *Bayes*: Posterior $prop$ Prior $times$ Likelihood
+  *MAP=Ridge*: $hat(theta)_"MAP"=arg min[-log p(theta)-log p(D|theta)]$
+  Gaussian prior $cal(N)(0,sigma_p^2 I)$ → L2: $lambda/2||theta||^2$
+  *score*$(t,w)$= unnormalized log-prob = $sum_n$trans$+$emit
+]
+
+#cbox(title: [Exponential Family优势])[
+1.Conjugate priors exist → closed-form posterior; 2. Sufficient statistics compress data; 3. Max entropy under moment constraints; 4. Convex log-partition → unique MLE; 5. Natural gradient = Fisher info metric
+]
+
+#cbox(title: [DAG Properties])[
+  Topological order唯一确定; DP子问题独立拆分可行; Gradient反向传播良定义(no cycles)
+  *Hypergraph*: 函数式计算自然表示, multi-inputs→one output
+]
+
+#cbox(title: [Forward Algorithm])[
+  $alpha[0,t]=exp("score"("BOS"->t))$ (init w/ BOS trans)
+  for $n=1,...,N-1$:
+  #h(1em) for $t_n in cal(T)$:
+  #h(2em) $alpha[n,t_n]=plus.o.big_(t_(n-1)) alpha[n-1,t_(n-1)] times.o exp("score")$
+  return $plus.o.big_t alpha[N-1,t]$ (sum last column!)
+
+  *直觉*: prefix之和, 从seq开头走到当前状态的所有走法score总和
+]
+
+#cbox(title: [Backward Algorithm])[
+  $forall t_N: beta[N,t_N] <- bold(1)$
+  for $n=N-1,...,0$:
+  #h(1em) for $t_n in cal(T)$:
+  #h(2em) $beta[n,t_n] <- plus.o.big_(t_(n+1)) exp("score"_(n+1)) times.o beta[n+1,t_(n+1)]$
+  return $beta[0,"BOS"]$ (single value!)
+
+  *Complexity*: $O(N|cal(T)|^2)$
+]
+
+#cbox(title: [Fwd vs Bwd Asymmetry])[
+  *Init*: Bwd直接$bold(1)$; Fwd需BOS转移
+  *Term*: Bwd返回$beta[0,"BOS"]$单值; Fwd需$plus.o$整列
+  *原因*: BOS显式存在, EOS不显式处理
+]
+
+#cbox(title: [Viterbi Detail])[
+  每步枚举$t$和$t_(n-1)$组合→$|cal(T)|^2$种trans
+  $delta[n,t]=max_(t_(n-1))[delta[n-1,t_(n-1)]+"score"(t_(n-1),t)]$
+  Backtrack: 存$"argmax"$指针, 从末尾回溯
+]
+
+#cbox(title: [CKY Chart 3×3 Example])[
+  Sentence: $w_1 w_2 w_3$; Chart索引$[i,j]$=span from $i$ to $j$
+  #set text(size: 8pt)
+  #table(
+    columns: 4,
+    [], [1], [2], [3],
+    [0], [$C[0,1]$], [$C[0,2]$], [$C[0,3]$←*goal*],
+    [1], [], [$C[1,2]$], [$C[1,3]$],
+    [2], [], [], [$C[2,3]$],
+  )
+  *Fill order*: diag first ($C[i,i+1]$=词), then by span length
+  $ C[i,k,X]=plus.o.big_(j,Y,Z) W(X->Y Z) times.o C[i,j,Y] times.o C[j,k,Z] $
+]
+
+
+#cbox(title: [CLE Algorithm (Chu-Liu-Edmonds)])[
+  *Goal*: max spanning arborescence (directed MST)
+  1. For each node $v$, pick max incoming edge
+  2. If no cycle → done (it's a tree)
+  3. If cycle exists → *contract* cycle to supernode
+  4. Recursively solve contracted graph
+  5. *Expand*: break cycle at min-loss edge
+  *Gain*: $G=omega(u->v)-omega_"in-cycle"(v)$
+  *Remove*: $e_"remove"=arg min_(x->y in "cycle") omega(x->y)$
+  *Complexity*: $O(N^2)$ or $O(E+N log N)$
+]
+
+#cbox(title: [MTT vs CLE])[
+  #set text(size: 6pt)
+  #table(
+    columns: 3,
+    [*维度*], [*MTT*], [*CLE*],
+    [目标], [$Z=sum_t exp("score")$], [$t^*=arg max "score"$],
+    [算法], [$det(tilde(L))$], [Greedy+Contract],
+    [复杂度], [$O(N^3)$], [$O(N^2)$],
+    [Root], [嵌入$tilde(L)$第一行], [后处理强制],
+  )
+]
+
+#cbox(title: [Graph Laplacian $L$])[
+  $L_(i j)=cases(
+    "Degree"(i) & i=j "(对角线)",
+    -1 & i!=j and i tilde j "(有边)",
+    0 & "otherwise"
+  )$
+  *技巧*: 只看非对角$-1$判断边存在
+  *MTT*: \#spanning trees = $det(hat(L))$ (any minor)
+  *Minor $hat(L)$*: 删第$i$行和第$i$列
+]
+
+#cbox(title: [Weighted Laplacian for Dep Parse])[
+  $A_(i j)=exp("score"(i->j))$
+  $L_(i j)=cases(
+    rho_j & i=1 "(root scores)",
+    sum_(k!=j) A_(k j) & i=j "(in-degree)",
+    -A_(i j) & "else"
+  )$
+  $Z=det(L)$ computes partition function
+]
+
+#cbox(title: [Dependency Tree Constraints])[
+  1. *Single head*: each node (except root) has exactly 1 parent
+  2. *Connected*: 整图联通
+  3. *Acyclic*: 有向无环
+  *Projective*: arcs不交叉 (要么嵌套、要么并列)
+  *Non-projective*: arcs可交叉 → 必须用CLE/MTT
+]
+
+#cbox(title: [Edge-Factored Score])[
+  $"score"(t,bold(w))=sum_((i->j) in t) "score"(i->j,bold(w))+"score"(r,bold(w))$
+  *优点*: 全局优化分解为局部边决策, 允许独立计算$Z$和argmax
+  *局限*: 无法捕捉sibling/grandparent effects
+]
+
+#cbox(title: [Projective vs Non-proj])[
+  *Projective*: 可用CKY-style DP ($O(N^3)$)
+  *Non-proj*: 需MTT(求$Z$) + CLE(求best tree)
+  *判断*: 画arc, 看是否有交叉
+]
+
+// === 
 
 #block(stroke: 0pt, inset: 3pt, width: 100%)[
   #set text(size: 7pt)
