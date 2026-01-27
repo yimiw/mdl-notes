@@ -18,7 +18,7 @@
 
 #show: columns.with(4, gutter: 0.5em)
 
-= 0. Intro
+= 0. Intro   
 #cbox(title: [Hypergraph View])[
   Computation graph = labeled acyclic *hypergraph*.
   Edges can have multiple sources/targets.
@@ -224,7 +224,7 @@
 ]
 
 #cbox(title: [Semiring Definition])[
-  $angle.l bb(K),plus.o,times.o,bold(0),bold(1) angle.r$ where:
+  $chevron.l bb(K),plus.o,times.o,bold(0),bold(1) chevron.r$ where:
   1. $(bb(K),plus.o,bold(0))$: *comm monoid* (assoc+comm+identity)
   2. $(bb(K),times.o,bold(1))$: *monoid* (assoc+identity)
   3. *Distrib*: $(x plus.o y) times.o z=(x times.o z) plus.o (y times.o z)$
@@ -471,7 +471,7 @@
 = 9. WFST & Lehmann
 
 #cbox(title: [Transducer Def])[
-  $T=angle.l Q,Sigma,Omega,lambda,rho,delta angle.r$
+  $T=chevron.l Q,Sigma,Omega,lambda,rho,delta chevron.r$
   $Q$: states; $Sigma$: input; $Omega$: output
   $lambda: Q->RR$: initial; $rho: Q->RR$: final
   $delta: Q times (Sigma union epsilon) times (Omega union epsilon) times Q -> RR$
@@ -501,10 +501,10 @@
 #cbox(title: [Lehmann递推直觉])[
   $bold(R)_(i k)^((j))$: 从$q_i$到$q_k$, 仅经过${q_1,...,q_j}$的paths总权
   *分解*:
-  $ bold(R)_(i k)^((j)) = bold(R)_(i k)^((j-1)) plus.circle (bold(R)_(i j)^((j-1)) times.circle (bold(R)_(j j)^((j-1)))^* times.circle bold(R)_(j k)^((j-1))) $
+  $ bold(R)_(i k)^((j)) = bold(R)_(i k)^((j-1)) plus.o (bold(R)_(i j)^((j-1)) times.o (bold(R)_(j j)^((j-1)))^* times.o bold(R)_(j k)^((j-1))) $
   不经$q_j$ + (到$q_j$ + 在$q_j$循环任意次 + 离开$q_j$)
   
-  $ Z = plus.o.big_(i,k in Q) lambda(q_i) times.circle bold(R)_(i k) times.circle rho(q_k)$
+  $ Z = plus.o.big_(i,k in Q) lambda(q_i) times.o bold(R)_(i k) times.o rho(q_k)$
   
   $lambda$: initial weights
   $rho$: final weights
@@ -657,13 +657,6 @@
   *Imbalanced test*: loss ignores minorities
 ]
 
-// #cbox(title: [Ethical Frameworks])[
-//   *Consequentialism*: best consequence
-//   *Utilitarism*: hedonistic/preference/welfare
-//   *Deontology*: rules must be kept
-//   *Social Contract*: natural equality
-//   *Anti-subordination*: positive discrimination for equality
-// ]
 
 #cbox(title: [BLEU Score])[
   $"BLEU"="BP" times exp(sum_(n=1)^N w_n log p_n)$
@@ -724,7 +717,7 @@
 ]
 
 = 补充
-#cbox(title: [Edit Distance FSA ⚠️])[
+#cbox(title: [Edit Distance FSA ])[
   *状态*: $(i,e)$ 位置×编辑次数, 共$O(d N)$个
   *转移*:
   匹配$s_i$→$(i+1,e)$; 
@@ -735,7 +728,7 @@
   *口诀*: 插读不动, 删ε跳, 替错跳
 ]
 
-#cbox(title: [Semiring速判 ⚠️])[
+#cbox(title: [Semiring速判 ])[
   *先验$bold(0) plus.o a = a$*
   $min$单位元=$+infinity$ (非$0$/$-infinity$)
   $max$单位元=$-infinity$
@@ -743,19 +736,19 @@
   *Kleene*: Real $a^*=1/(1-a)$; Bool $a^*=1$
 ]
 
-#cbox(title: [BPTT ⚠️])[
+#cbox(title: [BPTT ])[
   $(partial h_t)/(partial h_k)=product_i "diag"(sigma')R$
   $R^n=Q D^n Q^(-1)$
   $|lambda|<1$→消失; $|lambda|>1$→爆炸
 ]
 
-#cbox(title: [FOL ⚠️])[
+#cbox(title: [FOL ])[
   $forall$配$=>$; $exists$配$and$
   "所有X都Y": $forall x.X(x)=>Y(x)$
   "有些X是Y": $exists x.X(x) and Y(x)$
 ]
 
-#cbox(title: [$beta$-reduce ⚠️])[
+#cbox(title: [$beta$-reduce ])[
   $(lambda x.M)N -> M[x:=N]$
   $(lambda x.(x x))(lambda z.x)=(lambda z.x)(lambda z.x)=x$
 ]
@@ -766,8 +759,8 @@
     columns: 3,
     [*项目*], [*Forward*], [*Backward*],
     [初始化], [$alpha[0,t]=exp("score"("BOS"->t))$], [$beta[N,t]=bold(1)$ 全1],
-    [递推], [$alpha[n,t]=plus.circle.big_(t') alpha[n-1,t'] times.circle exp$], [$beta[n,t]=plus.circle.big_(t') exp times.circle beta[n+1,t']$],
-    [终止], [$plus.circle.big_t alpha[N,t]$ 需sum], [$beta[0,"BOS"]$ 单值],
+    [递推], [$alpha[n,t]=plus.o.big_(t') alpha[n-1,t'] times.o exp$], [$beta[n,t]=plus.o.big_(t') exp times.o beta[n+1,t']$],
+    [终止], [$plus.o.big_t alpha[N,t]$ 需sum], [$beta[0,"BOS"]$ 单值],
   )
   *原因*: BOS显式存在, EOS隐式处理使用场景
   *Forward*: 单独计算$Z$ (partition function)
