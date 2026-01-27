@@ -411,6 +411,3 @@
     ],
   )
 }
-
-// 🧪highlight:
-#let hl(body) = highlight(fill: rgb("#FEF3C7"), text(fill: rgb("#92400E"))[#body])

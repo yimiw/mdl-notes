@@ -174,38 +174,6 @@
   $beta(w,t_n)<-max_(t_(n+1))exp("score") times beta(w,t_(n+1))$
   *Structured CRF*: $log p=sum_i ("score"(t^((i)),w^((i)))-max_(t')"score"(t',w^((i))))$
 ]
-#cbox(title: [Semiring Definition])[
-  $angle.l bb(K),plus.o,times.o,bold(0),bold(1) angle.r$ where:
-  1. $(bb(K),plus.o,bold(0))$: *comm monoid* (assoc+comm+identity)
-  2. $(bb(K),times.o,bold(1))$: *monoid* (assoc+identity)
-  3. *Distrib*: $(x plus.o y) times.o z=(x times.o z) plus.o (y times.o z)$
-  4. *Annihilator*: $bold(0) times.o x=x times.o bold(0)=bold(0)$
-]
-
-#cbox(title: [Semiring意义])[
-  $plus.o$: *分治* (split points合并, OR/MAX/+)
-  $times.o$: *连接* (左右子树组合, AND/$times$/+)
-  $bold(0)$: 吸收元, 消除invalid; $bold(1)$: 单位元, null不破坏
-]
-
-#cbox(title: [Monoid判定])[
-  1. *Closure*: $a times.o b in bb(K)$; 2. *Assoc*: $(a times.o b) times.o c=a times.o (b times.o c)$; 3. *Identity*: $exists bold(e): a times.o bold(e)=bold(e) times.o a=a$
-  // *陷阱*: 减法不assoc; identity须在集合内
-  // $angle.l NN,+,0 angle.r$✓; $angle.l ZZ,-,0 angle.r$✗(不assoc)
-  // $angle.l Sigma^*,"concat",epsilon angle.r$✓(非交换!)
-]
-
-#cbox(title: [Semiring判定])[
-  1. $plus.o$-monoid (comm): $a plus.o b=b plus.o a$ ; 2. $times.o$-monoid; 3. Distributivity (左右皆需); 4. Annihilation: $bold(0) times.o x=bold(0)$
-  *陷阱*: $bold(0)=bold(1)$必失败!
-  // $angle.l RR_(>=0),max,+,0,0 angle.r$✗ ($bold(0)=bold(1)$矛盾)
-]
-
-#cbox(title: [Closed Semiring & Kleene\*])[
-  $a^*=plus.o.big_(n=0)^infinity a^(times.o n)=bold(1) plus.o a times.o a^*$
-  Real上$|a|<1$: $a^*=1/(1-a)$ (geometric series)
-  用于globally normalized LM
-]
 
 #cbox(title: [DP推导])[
   Goal: $Z=sum_(bold(t))exp"score"(bold(t),bold(w))$
@@ -289,6 +257,38 @@
 //   *Tropical*: $chevron.l RR^+,min,+,infinity,0 chevron.r$ (shortest dist)
 //   *Counting*: $chevron.l NN,+,times,0,1 chevron.r$ (\#paths)
 // ]
+#cbox(title: [Semiring Definition])[
+  $angle.l bb(K),plus.o,times.o,bold(0),bold(1) angle.r$ where:
+  1. $(bb(K),plus.o,bold(0))$: *comm monoid* (assoc+comm+identity)
+  2. $(bb(K),times.o,bold(1))$: *monoid* (assoc+identity)
+  3. *Distrib*: $(x plus.o y) times.o z=(x times.o z) plus.o (y times.o z)$
+  4. *Annihilator*: $bold(0) times.o x=x times.o bold(0)=bold(0)$
+]
+
+#cbox(title: [Semiring意义])[
+  $plus.o$: *分治* (split points合并, OR/MAX/+)
+  $times.o$: *连接* (左右子树组合, AND/$times$/+)
+  $bold(0)$: 吸收元, 消除invalid; $bold(1)$: 单位元, null不破坏
+]
+
+#cbox(title: [Monoid判定])[
+  1. *Closure*: $a times.o b in bb(K)$; 2. *Assoc*: $(a times.o b) times.o c=a times.o (b times.o c)$; 3. *Identity*: $exists bold(e): a times.o bold(e)=bold(e) times.o a=a$
+  // *陷阱*: 减法不assoc; identity须在集合内
+  // $angle.l NN,+,0 angle.r$✓; $angle.l ZZ,-,0 angle.r$✗(不assoc)
+  // $angle.l Sigma^*,"concat",epsilon angle.r$✓(非交换!)
+]
+
+#cbox(title: [Semiring判定])[
+  1. $plus.o$-monoid (comm): $a plus.o b=b plus.o a$ ; 2. $times.o$-monoid; 3. Distributivity (左右皆需); 4. Annihilation: $bold(0) times.o x=bold(0)$
+  *陷阱*: $bold(0)=bold(1)$必失败!
+  // $angle.l RR_(>=0),max,+,0,0 angle.r$✗ ($bold(0)=bold(1)$矛盾)
+]
+
+#cbox(title: [Closed Semiring & Kleene\*])[
+  $a^*=plus.o.big_(n=0)^infinity a^(times.o n)=bold(1) plus.o a times.o a^*$
+  Real上$|a|<1$: $a^*=1/(1-a)$ (geometric series)
+  用于globally normalized LM
+]
 
 = 6. CFG Parsing
 
@@ -310,7 +310,7 @@
   *Probabilistic*: local norm $sum_k p(alpha_k|N)=1$
 ]
 
-#cbox(title: [CKY Algorithm])[
+#cbox(title: [CKY algo])[
   $O(N^3|R|)$, needs CNF
   for $n=1,...,N$: for $X->s_n in cal(R)$:
   $"chart"[n,n+1,X] bold(plus.o) exp("score"(X->s_n))$
@@ -376,29 +376,86 @@
   Don't need I: $(S K K)x=x$
 ]
 
-= 9. WFSTs
+= 9. WFST & Lehmann
 
-#cbox(title: [Transducer])[
-  $T=chevron.l cal(Q),Sigma,Omega,lambda,rho,delta chevron.r$
-  States, input vocab, output vocab, initial/final scores, transitions
-  Goal: $p(y|x)$, $x in Sigma^*$, $y in Omega^*$
+#cbox(title: [Transducer Def])[
+  $T=angle.l Q,Sigma,Omega,lambda,rho,delta angle.r$
+  $Q$: states; $Sigma$: input vocab; $Omega$: output vocab
+  $lambda: Q->RR$: initial weights; $rho: Q->RR$: final weights
+  $delta: Q times (Sigma union epsilon) times (Omega union epsilon) times Q -> RR$
+  *$epsilon$-transition*: no input consumed / no output produced
 ]
 
-#cbox(title: [Scoring])[
-  $"score"(pi)=lambda(q_"start")+sum_n delta(q_n)+rho(q_"end")$
+#cbox(title: [FSA vs FST])[
+  *WFSA* (单带): read only, $"score"(pi)=sum_n "score"(tau_n)$
+  *WFST* (双带): read input + write output simultaneously
+  *Unambiguous*: $|Pi(x,y)|<=1$ (at most 1 path per pair)
+  *Ambiguous*: $|Pi(x,y)|>1$ → need semiring to aggregate
+]
+
+#cbox(title: [Path Score])[
+  $"score"(pi)=lambda(q_"start")+sum_(n=1)^(|pi|)"score"(tau_n)+rho(q_"end")$
   $p(y|x)=1/Z sum_(pi in Pi(x,y))exp("score"(pi))$
-  $Z=sum_(y' in Omega^*)sum_(pi')exp("score")$ (infinite—loops!)
+  $Z=sum_(y' in Omega^*)sum_(pi')exp("score"(pi'))$ (infinite!)
 ]
 
-#cbox(title: [Floyd-Warshall + Semiring])[
-  $forall i,j,k: "dist"[i][j]<-"dist"[i][j] plus.o ("dist"[i][k] times.o "dist"[k][j])$
-  *Matrix mult*: sum$<-overline(0)$; sum$<-$sum$plus.o(A[n][m] times.o B[m][p])$
+// #cbox(title: [Semiring for WFST])[
+//   #set text(size: 5.5pt)
+//   #table(
+//     columns: 5,
+//     [*Name*], [$(plus.o,times.o)$], [$(bold(0),bold(1))$], [$r^*$], [*用途*],
+//     [Tropical], [$(min,+)$], [$(infinity,0)$], [$0$ if $r>=0$], [最短路/Viterbi],
+//     [Inside], [$(+,times)$], [$(0,1)$], [$1/(1-r)$], [Partition $Z$],
+//     [Log], [(lse,$+$)], [$(-infinity,0)$], [$-log(1-e^r)$], [$log Z$],
+//   )
+// ]
+
+#cbox(title: [Matrix Multiplication View])[
+  $C=A times.o B$: $C_(i j)=plus.o.big_k (A_(i k) times.o B_(k j))$
+  *Tropical*: $C_(i j)=min_k (A_(i k)+B_(k j))$
+  *Inside*: $C_(i j)=sum_k (A_(i k) times B_(k j))$
+  Naive $W^N$: $O(N^4)$ (N matrix mults × $O(N^3)$ each)
+]
+
+#cbox(title: [Floyd-Warshall])[
+  *Key*: allow中间node $k$ incrementally
+  Runtime: $O(N^3)$ (reuses DP, not $O(N^4)$)
+  $ "dist"_k [i][j]=min("dist"_(k-1)[i][j], "dist"_(k-1)[i][k]+"dist"_(k-1)[k][j]) $
+  
+]
+
+#cbox(title: [Lehmann algo])[
+  *Generalized FW*适用_any closed semiring_:
+  $W[i][j] <- W[i][j] plus.o (W[i][k] times.o W[k][k]^* times.o W[k][j])$
+  *Kleene Star* $W[k][k]^*$: self-loop at $k$ any \# times
+  - Tropical: $(W[k][k])^*=0$ (positive cycle doesn't help)
+  - Inside: $(W[k][k])^*=1/(1-W[k][k])$ (geometric series)
+  Runtime: $O(|Q|^3)$
 ]
 
 #cbox(title: [Kleene Star])[
-  $ W^*=plus.o_(k=0)^infinity W^k=I+W W^* arrow.l.r.double W^*=(I-W)^(-1) $
-  *Warshall-Floyd-Kleene*:
-  $ "dist"[i][j]<-"dist"[i][j] plus.o ("dist"[i][k] times.o "dist"[k][k]^* times.o "dist"[k][j]) $
+  $a^*=plus.o.big_(n=0)^infinity a^(times.o n)=bold(1) plus.o a times.o a^*$
+  *Closed semiring*: $a^*$ always exists
+  Real $|a|<1$: $a^*=1+a+a^2+...=1/(1-a)$
+]
+
+#cbox(title: [Normalization Constant Z])[
+  $Z=alpha^top (plus.o.big_(omega in Sigma^*) W^((omega)))^* beta$
+  $alpha$: initial weight vec; $beta$: final weight vec
+  $W^((omega))$: transition matrix for symbol $omega$
+  *Why Lehmann?* Direct sum over infinite paths impossible
+  Lehmann computes closure in $O(|Q|^3)$
+]
+
+#cbox(title: [Pathsum Formula])[
+  $Z(cal(T))=plus.o.big_(i,k in Q) lambda(q_i) times.o bold(R)_(i k) times.o rho(q_k)$
+  $bold(R)$: all-pairs path weight matrix (via Lehmann)
+]
+
+#cbox(title: [Composition])[
+  $cal(T)(x,y)=plus.o.big_(z in Omega^*) cal(T)_1(x,z) times.o cal(T)_2(z,y)$
+  *Transliteration*: 3 transducers cascade
+  $cal(T)_x$ (input) $compose$ $cal(T)_theta$ (model) $compose$ $cal(T)_y$ (output)
 ]
 
 = 10. Transformers & MT
@@ -460,7 +517,7 @@
 #cbox(title: [Evaluation Metrics])[
   *Prec*: $P_"true"\/P_"all"$; *Recall*: $P_"true"\/(P_"true"+N_"false")$
   *Acc*: $(P_"true"+N_"true")\/N$
-  *F-score*: $((1+beta^2)("prec" dot "recall"))/(beta^2"prec"+"recall")$
+  *F-score*: $((1+beta^2)("prec" dot "recall"))\/(beta^2"prec"+"recall")$
 ]
 
 #cbox(title: [Statistical Tests])[
