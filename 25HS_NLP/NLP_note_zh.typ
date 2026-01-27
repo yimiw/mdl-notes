@@ -3,7 +3,7 @@
 
 // Configure the document with custom settings
 #show: summary_project.with(
-  title: "25HS_NLP",
+  title: "25HS_NLP_Note",
   authors: ((name: ""),),
 
   // Customize for compact printing

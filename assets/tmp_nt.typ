@@ -179,7 +179,7 @@
     #text(size: 2.2em, weight: "bold", fill: primary_color)[#title]
     #v(0.5em, weak: true)
     #text(size: 1em, style: "italic", fill: accent_color.darken(30%))[
-      Lecture Notes
+      latest update: 2026-01-27
     ]
     #v(0.5em, weak: true)
     #for author in authors [
@@ -190,7 +190,7 @@
 
   // pagebreak()
 
-  // 新目录部分（双栏紧凑版）
+  // 目录部分（多栏紧凑版）
 {
   // 样式覆盖
   show outline.entry: it => {
