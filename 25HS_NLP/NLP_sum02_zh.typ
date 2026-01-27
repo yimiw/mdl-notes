@@ -2576,8 +2576,6 @@ Lambda calculus 的 Turing completeness 来源于：$beta$-reduction 可能*不�
 
 == Attention Mechanism
 
-
-
 === 动机与直觉
 
 Attention 解决 fixed-length bottleneck：允许 decoder 在每一步 *动态关注* 输入的不同部分，不仅从单一压缩向量 $bold(z)$ 解码，而是每步动态查询 encoder 全部hidden states.
@@ -2622,7 +2620,6 @@ Attention 解决 fixed-length bottleneck：允许 decoder 在每一步 *动态�
   gutter: 1em,
 
   [
-
     #definition(title: "Attention Mechanism")[
       给定：
       - *Query* $bold(q) in RR^(d_q)$：当前 decoder 状态（"我在找什么"）

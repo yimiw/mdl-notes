@@ -88,16 +88,16 @@
 ]
 
 #cbox(title: [Softmax])[
-  $"softmax"(h,y,T)=(exp(h_y\/T))/(sum_(y')exp(h_(y')\/T))$
+  $"sftm"(h,y,T)=(exp(h_y\/T))/(sum_(y')exp(h_(y')\/T))$
   $T->0$: argmax; $T->infinity$: uniform
-  $log "softmax"=h_y-log sum_(y')exp(h_(y'))$ (logsumexp)
+  $log "sftm"=h_y-log sum_(y')exp(h_(y'))$ (logsumexp)
 ]
 
 #cbox(title: [MLP Architecture])[
   *Problem*: Log-linear needs linearly separable data
   *Solution*: Learn non-linear feature fn
   $bold(h)_k=sigma_k (bold(W)_k^top bold(h)_(k-1))$, $bold(h)_1=sigma_1 (bold(W)_1^top bold(e)(x))$
-  Output: $"softmax"(bold(theta)^top bold(h)_n)$
+  Output: $"sftm"(bold(theta)^top bold(h)_n)$
 ]
 
 #cbox(title: [Activations])[
@@ -210,7 +210,7 @@
 ]
 
 #cbox(title: [Common Semirings])[
-  #set text(size: 6pt)
+  #set text(size: 6.5pt)
   #table(
     columns: 7,
     [*Name*], [$bb(K)$], [$plus.o$], [$times.o$], [$bold(0)$], [$bold(1)$], [*用途*],
@@ -229,7 +229,7 @@
   2. $(bb(K),times.o,bold(1))$: *monoid* (assoc+identity)
   3. *Distrib*: $(x plus.o y) times.o z=(x times.o z) plus.o (y times.o z)$
   4. *Annihilator*: $bold(0) times.o x=x times.o bold(0)=bold(0)$
-  *陷阱*: $bold(0)=bold(1)$必失败!
+  // *陷阱*: $bold(0)=bold(1)$必失败!
 ]
 
 #cbox(title: [Semiring意义])[
@@ -290,7 +290,7 @@
 
 #cbox(title: [CKY Chart 3×3 Example])[
   Sentence: $w_1 w_2 w_3$
-  #set text(size: 7pt)
+  #set text(size: 6.5pt)
   #table(
     columns: 4,
     [], [1], [2], [3],
@@ -312,11 +312,22 @@
 ]
 
 #cbox(title: [Edge-Factored Model])[
-  *优点*: 全局优化分解为局部边决策
+  *Arc-factored*: 每条边独立打分，树score=边score之和
+  *优点*: global优化分解为local边决策
   *局限*: 无法捕捉sibling/grandparent effects
   $"score"(t,bold(w))=sum_((i->j) in t) "score"(i->j,bold(w))+"score"(r,bold(w))$
   $p(t|w)=1/Z product_((i->j) in t)exp("score"(i,j,w))exp("score"(r,w))$
-  
+]
+
+#cbox(title: [CLE关键步骤])[
+  *Goal*: max spanning arborescence (directed MST)
+  1. For each node $v$, pick max incoming edge
+  2. If no cycle → done (it's a tree)
+  3. If cycle → *contract* cycle to supernode
+  4. *Reweight*: $omega'(u->v)=omega(u->v)-omega_"in-cycle"(v)$
+  5. Recursively solve contracted graph
+  6. *Expand*: break cycle at min-loss edge
+  *Complexity*: $O(N^2)$ or $O(E+N log N)$
 ]
 
 #cbox(title: [Cayley Formula])[
@@ -342,19 +353,10 @@
     sum_(k!=j) A_(k j) & i=j "(in-degree)",
     -A_(i j) & "else"
   )$
-  $Z=det(L)$, Computing in $O(n^3)$
+  $Z=det(L)$, 复杂度$O(n^3)$
 ]
 
-#cbox(title: [CLE Algorithm])[
-  *Goal*: max spanning arborescence (directed MST)
-  1. For each node $v$, pick max incoming edge
-  2. If no cycle → done (it's a tree)
-  3. If cycle → *contract* cycle to supernode
-  4. *Reweight*: $omega'(u->v)=omega(u->v)-omega_"in-cycle"(v)$
-  5. Recursively solve contracted graph
-  6. *Expand*: break cycle at min-loss edge
-  *Complexity*: $O(N^2)$ or $O(E+N log N)$
-]
+
 
 #cbox(title: [Root Constraint])[
   CLE base允许多root outgoing arcs
@@ -433,6 +435,23 @@
   *Slash方向*: $\/$ 向右找arg; $backslash$ 向左找arg
 ]
 
+#cbox(title: "Derivation with Semantics")[
+      Lexicon:
+      - Mary : NP : $"Mary"$
+      - likes : $(S backslash "NP") \/ "NP"$ : $lambda y. lambda x. "Likes"(x, y)$
+      - John : NP : $"John"$
+
+      Parse "Mary likes John":
+      ```
+      Mary        likes                    John
+      NP:Mary (S\NP)/NP:λy.λx.Likes(x,y)  NP:John
+                 ───────────────────────────── >
+                            S\NP:λx.Likes(x,John)
+      ──────────────────────────────────────── <
+                        S:Likes(Mary,John)
+      ```
+    ]
+
 #cbox(title: [LIG构造策略])[
   *问题*: CFG无法"计数" ($a^n b^n c^n$中$n$相等)
   *LIG*: 用stack记录计数信息
@@ -479,11 +498,24 @@
   Naive $W^N$: $O(N^4)$ → Lehmann fixes to $O(N^3)$
 ]
 
+#cbox(title: [Lehmann递推直觉])[
+  $bold(R)_(i k)^((j))$: 从$q_i$到$q_k$, 仅经过${q_1,...,q_j}$的paths总权
+  *分解*:
+  $ bold(R)_(i k)^((j)) = bold(R)_(i k)^((j-1)) plus.circle (bold(R)_(i j)^((j-1)) times.circle (bold(R)_(j j)^((j-1)))^* times.circle bold(R)_(j k)^((j-1))) $
+  不经$q_j$ + (到$q_j$ + 在$q_j$循环任意次 + 离开$q_j$)
+  
+  $ Z = plus.o.big_(i,k in Q) lambda(q_i) times.circle bold(R)_(i k) times.circle rho(q_k)$
+  
+  $lambda$: initial weights
+  $rho$: final weights
+  $bold(R)_(i k)$: Lehmann算出的all-paths权重
+]
+
 #cbox(title: [Floyd-Warshall])[
   *Key*: allow中间node $k$ incrementally
   $ "dist"_k [i][j]=min("dist"_(k-1)[i][j], "dist"_(k-1)[i][k]+"dist"_(k-1)[k][j]) $
   Runtime: $O(N^3)$
-  *FW*是Lehmann在Tropical的特例（$a^*=0$）
+  *FW*是Lehmann在Tropical的特例（$a^*=0$ 循环不帮助）
 ]
 
 #cbox(title: [Lehmann algo])[
@@ -525,15 +557,22 @@
 
 #cbox(title: [Attention])[
   $alpha^T V=sum_i alpha_i v_i^T$ (soft retrieval)
-  $alpha_i="softmax"("score"(q,k_i))$
+  $alpha_i="sftm"("score"(q,k_i))$
   $K=V=H^((e))$, $q_t=h_t^((d))$, $c=alpha^T V$
 ]
 
 #cbox(title: [Self-Attention])[
   $bold(Q)=bold(X)bold(W)_Q$, $bold(K)=bold(X)bold(W)_K$, $bold(V)=bold(X)bold(W)_V$
-  $"SelfAtt"="softmax"((bold(Q)bold(K)^top)/sqrt(d_k))bold(V)$
-  *$sqrt(d_k)$*: 防止dot product过大导致softmax饱和
+  $"SelfAtt"="sftm"((bold(Q)bold(K)^top)/sqrt(d_k))bold(V)$
+  *$sqrt(d_k)$*: 防止点积过大导致softmax饱和; $sigma^2$.
   *Complexity*: $O(n d^2+d n^2)$
+
+  Permutation Equivariance:  若 $f$ 是 permutation equivariant，则对任意 permutation $pi$, $f(pi(X)) = pi(f(X))$, 若$bold(Q)$ fixed（如常数矩阵），则attention permutation invariant.即打乱输入顺序，输出以相同方式打乱. 
+  设 $bold(P)$ 是 permutation matrix, 则:
+  $"Attn"(bold(P X)) = "sftm"( 1/ sqrt(d) (bold(P X) bold(W)_Q)(bold(P X) bold(W)_K)^top) (bold(P X) bold(W)_V) 
+    = "sftm"(bold(P) bold(Q) bold(K)^top bold(P)^top/ sqrt(d)) bold(P) bold(V) = bold(P) "sftm"(bold(Q) bold(K)^top / sqrt(d)) bold(V) = bold(P) "Attn"(bold(X))
+  $
+  
 ]
 
 #cbox(title: [Positional Encoding])[
@@ -609,7 +648,7 @@
   *McNemar*: $chi^2=((b-c)^2)/(b+c) tilde chi_1^2$
 ]
 
-= 12. Bias & Fairness
+= 12. Bias & Fairness &Eval
 
 #cbox(title: [Bias Sources])[
   *Labeling*: reproduce annotator bias
@@ -618,16 +657,128 @@
   *Imbalanced test*: loss ignores minorities
 ]
 
-#cbox(title: [Ethical Frameworks])[
-  *Consequentialism*: best consequence
-  *Utilitarism*: hedonistic/preference/welfare
-  *Deontology*: rules must be kept
-  *Social Contract*: natural equality
-  *Anti-subordination*: positive discrimination for equality
+// #cbox(title: [Ethical Frameworks])[
+//   *Consequentialism*: best consequence
+//   *Utilitarism*: hedonistic/preference/welfare
+//   *Deontology*: rules must be kept
+//   *Social Contract*: natural equality
+//   *Anti-subordination*: positive discrimination for equality
+// ]
+
+#cbox(title: [BLEU Score])[
+  $"BLEU"="BP" times exp(sum_(n=1)^N w_n log p_n)$
+  $p_n$: n-gram precision (clipped count)
+  $"BP"=cases(1 & c>r, e^(1-r\/c) & "otherwise")$
+  $c$=候选长度, $r$=参考长度, $w_n=1\/N$
+  *Clipped*: $"count"_"clip"=min("count"_"pred", max_"ref" "count"_"ref")$
+  防止重复词刷分
 ]
 
-#block(stroke: 0pt, inset: 3pt, width: 100%)[
+#cbox(title: [Model Taxonomy])[
+  *Probabilistic*: 建模$p(Y|X)$或$p(X,Y)$
+  - *Discriminative*: 直接$p(Y|X)$ (LogReg, CRF)
+  - *Generative*: joint $p(X,Y)=p(Y)p(X|Y)$ (N-gram, HMM)
+  *Non-Prob*: Learned (SVM, MLP) / Handcrafted (CFG)
+]
+
+#cbox(title: [Confusion Matrix Metrics])[
   #set text(size: 7pt)
+  #table(
+    columns: 3, inset: 2pt,
+    [], [Pred +], [Pred −],
+    [Actual +], [TP], [FN],
+    [Actual −], [FP], [TN],
+  )
+  $"Prec"="TP"\/("TP"+"FP")$; $"Recall"="TP"\/("TP"+"FN")$
+  $"F"_1=2 dot ("Prec" dot "Recall")\/("Prec"+"Recall")$
+  *为何不用Acc?* Class imbalance; 不同错误代价不同
+]
+
+#cbox(title: [K-Fold CV])[
+  数据分$K$份, 每次取第$k$份为test, 其余train
+  *Test set size*: $N\/K$
+  *Train set size*: $N times (K-1)\/K$
+  *Total models*: $K$
+  *Nested CV*: Inner loop调参, Outer loop评估
+]
+
+#cbox(title: [McNemar's Test])[
+  比较两个classifiers在同一数据集上表现
+  #set text(size: 7pt)
+  #table(
+    columns: 3, inset: 2pt,
+    [], [B Correct], [B Wrong],
+    [A Correct], [$n_(00)$], [$n_(01)$],
+    [A Wrong], [$n_(10)$], [$n_(11)$],
+  )
+  $chi^2=((|n_(01)-n_(10)|-1)^2)/(n_(01)+n_(10))$
+  只关注disagreement cells $n_(01),n_(10)$
+  要求$n_(01)+n_(10)>=25$
+]
+
+#cbox(title: [Permutation Test])[
+  1. 原始数据训练, 记录performance $P_0$
+  2. Repeat $B>=1000$次: permute labels, 重训, 记录$P_b$
+  3. p-value $approx$ fraction of $P_b>=P_0$
+  *tip*: 若labels有信息, 原始模型应显著优于permuted
+]
+
+= 补充
+#cbox(title: [Edit Distance FSA ⚠️])[
+  *状态*: $(i,e)$ 位置×编辑次数, 共$O(d N)$个
+  *转移*:
+  匹配$s_i$→$(i+1,e)$; 
+  插Σ→$(i,e+1)$;
+  删ε→$(i+1,e+1)$; 
+  替Σ$backslash s_i$→$(i+1,e+1)$
+  *终态*: $i=N$所有状态
+  *口诀*: 插读不动, 删ε跳, 替错跳
+]
+
+#cbox(title: [Semiring速判 ⚠️])[
+  *先验$bold(0) plus.o a = a$*
+  $min$单位元=$+infinity$ (非$0$/$-infinity$)
+  $max$单位元=$-infinity$
+  
+  *Kleene*: Real $a^*=1/(1-a)$; Bool $a^*=1$
+]
+
+#cbox(title: [BPTT ⚠️])[
+  $(partial h_t)/(partial h_k)=product_i "diag"(sigma')R$
+  $R^n=Q D^n Q^(-1)$
+  $|lambda|<1$→消失; $|lambda|>1$→爆炸
+]
+
+#cbox(title: [FOL ⚠️])[
+  $forall$配$=>$; $exists$配$and$
+  "所有X都Y": $forall x.X(x)=>Y(x)$
+  "有些X是Y": $exists x.X(x) and Y(x)$
+]
+
+#cbox(title: [$beta$-reduce ⚠️])[
+  $(lambda x.M)N -> M[x:=N]$
+  $(lambda x.(x x))(lambda z.x)=(lambda z.x)(lambda z.x)=x$
+]
+
+#cbox(title: [Fwd vs Bwd不对称性])[
+  #set text(size: 7pt)
+  #table(
+    columns: 3,
+    [*项目*], [*Forward*], [*Backward*],
+    [初始化], [$alpha[0,t]=exp("score"("BOS"->t))$], [$beta[N,t]=bold(1)$ 全1],
+    [递推], [$alpha[n,t]=plus.circle.big_(t') alpha[n-1,t'] times.circle exp$], [$beta[n,t]=plus.circle.big_(t') exp times.circle beta[n+1,t']$],
+    [终止], [$plus.circle.big_t alpha[N,t]$ 需sum], [$beta[0,"BOS"]$ 单值],
+  )
+  *原因*: BOS显式存在, EOS隐式处理使用场景
+  *Forward*: 单独计算$Z$ (partition function)
+  *Backward*: 单独计算suffix概率
+  *两者结合*: 计算marginals $p(t_n=t|bold(w))$
+    $p(t_n=t|bold(w)) = (alpha[n,t] times beta[n,t]) / Z$
+]
+
+
+#block(stroke: 0pt, inset: 3pt, width: 100%)[
+  #set text(size: 8pt)
   = Quick Ref
   *Chain*: $(d)/(d x)[f(g(x))]=f'(g)g'(x)$; Bauer: sum over all paths
   *Softmax*: $exp(h_y)\/sum exp(h_(y'))$; $T->0$=argmax
@@ -641,12 +792,6 @@
   *Kleene*: Inside $1/(1-a)$; Tropical $0$ if $a>=0$
   *CCG*: $X\/Y space Y=>X$ (>); $Y space X backslash Y=>X$ (<)
   *$beta$-reduce*: $(lambda x.M)N->M[x:=N]$; 先$alpha$-convert避免捕获
-  *Self-Attn*: $"softmax"(Q K^T\/sqrt(d))V$; $O(n d^2+d n^2)$
+  *Self-Attn*: $"sftm"(Q K^T\/sqrt(d))V$; $O(n d^2+d n^2)$
   *Cayley*: 固定root $n^(n-2)$; 任意root $n^(n-1)$
-]
-
-#block(stroke: 0pt, inset: 3pt, width: 100%)[
-  #set text(size: 6.5pt)
-  = Abbrev
-  *BOS/EOS*: Begin/End of Sentence; *CCG*: Combinatory Categorial Grammar; *CFG*: Context-Free Grammar; *CKY*: Cocke-Kasami-Younger; *CNF*: Chomsky Normal Form; *CRF*: Conditional Random Field; *DP*: Dynamic Programming; *LIG*: Linear Indexed Grammar; *MLE*: Max Likelihood Est; *MST*: Min Spanning Tree; *MTT*: Matrix-Tree Theorem; *POS*: Part-of-Speech; *RNN*: Recurrent Neural Network; *WFST*: Weighted Finite State Transducer;
 ]
