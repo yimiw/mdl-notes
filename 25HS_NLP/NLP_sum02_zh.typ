@@ -1156,10 +1156,6 @@ Jay Earley 进一步证明：对*任意* CFG（非 CNF），可达到 $O(N^3 |G|
 
 
 
-
-
-
-
 #grid(
   columns: (1fr, 1fr, 1fr),
   gutter: 1em,
