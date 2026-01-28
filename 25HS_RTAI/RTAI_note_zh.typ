@@ -231,7 +231,7 @@
   ],
 )
 
-#warning[
+#tip[
   大多数实用方法是 *Sound but Incomplete*：
   - 说"安全"时可信
   - 说"不知道"时不代表不安全，可能只是方法能力有限
@@ -318,7 +318,7 @@ $ [bold(l)', bold(u)'] = [W^+ bold(l) + W^- bold(u) + bold(b), quad W^+ bold(u) 
   ],
 )
 
-#warning[
+#tip[
   Over-approximation 误差随深度*累积*：
   $ "Error"_k = f("Error"_(k-1), "Layer"_k) $
 
@@ -368,25 +368,28 @@ $ x_4 in [0 - 0.7, 0.5 - 0.2] = [-0.7, 0.3] quad "（Crossing！" l < 0 < u "）
 
 == DeepPoly Relaxation
 
-DeepPoly 是介于 Box 和 MILP 之间的方法：比 Box 精确，比 MILP 快。
+#grid(
+  columns: (1fr,1fr),
+  [
+    DeepPoly 是介于 Box 和 MILP 之间的方法：比 Box 精确，比 MILP 快。
 
 #definition(title: "Linear Symbolic Bounds")[
-  每个神经元 $X_j$ 维护 *四个约束*：
+  每个神经元 $X_j$ 维护four *constraints*：
 
   $ X_j gt.eq sum_i a_i^L X_i + b^L quad "(下界线性约束)" $
   $ X_j lt.eq sum_i a_i^U X_i + b^U quad "(上界线性约束)" $
   $ X_j gt.eq L_j quad "(具体下界)" $
   $ X_j lt.eq U_j quad "(具体上界)" $
 ]
-
-#note[
+  #note[
   为什么需要具体 bounds $L_j, U_j$？
   - 判断 ReLU 是否 crossing
   - 随时停止 back-substitution（不必回溯到输入层）
   - 计算效率：$O(1)$ 的 ReLU transformer
 ]
-
-=== Affine 层
+  ],
+  [
+    === Affine 层
 
 对于 $bold(z) = W bold(x) + bold(b)$，DeepPoly 是 *Exact*（无损）：
 $ bold(z) lt.eq W bold(x) + bold(b) lt.eq bold(z) quad "(upper = lower)" $
@@ -401,12 +404,18 @@ $ Y lt.eq frac(u, u - l)(X - l) = lambda X - lambda l, quad "where" lambda = fra
 *Lower bound（可选/可优化）*：
 $ Y gt.eq alpha X, quad "where" alpha in [0, 1] $
 
-#warning[
+#tip[
   这个 $alpha$ 就是 $alpha$-CROWN 中的 $alpha$！它是可优化参数。
   - $alpha = 0$：$Y gt.eq 0$
   - $alpha = 1$：$Y gt.eq X$
   - 中间值：精度与速度的 trade-off
 ]
+  ],
+)
+
+
+
+
 
 === Back-Substitution
 
@@ -421,7 +430,7 @@ $ Y gt.eq alpha X, quad "where" alpha in [0, 1] $
   4. 用输入 bounds 计算最终数值
 ]
 
-#warning[
+#tip[
   *符号反转陷阱*：计算 upper bound 时，若系数为*负*，需要用变量的 *lower* bound：
 
   $ "If" quad X_j lt.eq -X_i + dots, quad "then substitute" quad X_i gt.eq dots "(lower bound)" $
@@ -429,11 +438,16 @@ $ Y gt.eq alpha X, quad "where" alpha in [0, 1] $
   原因：$-X_i$ 要最大化，需要 $X_i$ 最小化。
 ]
 
-=== Single-Neuron vs Multi-Neuron
 
-#figure(
+
+#grid(
+  columns: (1fr,1fr),
+  [
+  === Single-Neuron vs Multi-Neuron
+  #figure(
   table(
     columns: 4,
+    inset: 3pt,
     align: left,
     [*类型*], [*依赖关系*], [*并行性*], [*精度*],
     [Single-Neuron], [仅依赖前一层], [完全并行（GPU 友好）], [较低],
@@ -441,8 +455,10 @@ $ Y gt.eq alpha X, quad "where" alpha in [0, 1] $
   ),
   caption: [Relaxation 类型对比],
 )
-
 DeepPoly 采用 Single-Neuron，牺牲精度换取并行性。
+],
+  [
+    
 
 === Triangle Relaxation 为什么不 Scale
 
@@ -459,16 +475,16 @@ Triangle (3 个约束):          DeepPoly (2 个约束):
 
    约束数随层数指数增长           约束数固定为 2
 ```
+  ],
+)
+
+
 
 == $alpha$-$beta$-CROWN
 
-#definition(title: "$alpha$-$beta$-CROWN 组成")[
-  - $alpha$：ReLU 下界斜率参数，$in [0, 1]$，可gradient优化
-  - $beta$：Lagrange 乘子，$gt.eq 0$，用于编码 split 约束
-  - CROWN：DeepPoly 框架
-]
-
-=== Lagrange Multiplier 方法
+#grid(
+  columns: (1fr, 1fr),[
+    === Lagrange Multiplier 方法
 
 问题：朴素 split 会丢失关系信息（DeepPoly 只能维护一对约束）。
 
@@ -487,16 +503,24 @@ $ max_X min_beta [dots] lt.eq min_beta max_X [dots] $
 右侧更好处理：
 - $max_X$ 可通过 back-substitution 计算
 - $min_beta$ 可用gradient下降优化
+  ],
+  [#definition(title: "$alpha$-$beta$-CROWN 组成")[
+  - $alpha$：ReLU 下界斜率参数，$in [0, 1]$，可gradient优化
+  - $beta$：Lagrange 乘子，$gt.eq 0$，用于编码 split 约束
+  - CROWN：DeepPoly 框架
+]
 
 #note[
   关键性质：$alpha$ 和 $beta$ 只影响 *tightness*，不影响 *soundness*。
   - 任意 $alpha in [0, 1]$ 都是 sound 的 ReLU relaxation
   - 任意 $beta gt.eq 0$ 都给出 sound 的 upper bound
-]
+]]
+)
+
 
 == Floating-Point Soundness
 
-#warning[
+#tip[
   很多"Sound" verifier 在浮点运算下实际是 *Unsound* 的！
 
   - 理论：MILP 在实数 $RR$ 上是 Sound & Complete
@@ -517,69 +541,73 @@ $ max_X min_beta [dots] lt.eq min_beta max_X [dots] $
   4. 递归处理两个子问题（$X gt.eq 0$ 和 $X lt 0$）
 ]
 
-=== 算法伪代码
+#grid(
+  columns: (1fr, 1fr),
+  [=== 算法伪代码
 
-#algorithm(title: "Branch & Bound")[
-  ```python
-  def verify(spec, model, bounds):
-      # 1. Bound: 尝试用 relaxation 证明
-      lb, ub = compute_bounds(model, bounds)  # DeepPoly/CROWN
+    #algorithm(title: "Branch & Bound")[
+      ```python
+      def verify(spec, model, bounds):
+          # 1. Bound: 尝试用 relaxation 证明
+          lb, ub = compute_bounds(model, bounds)  # DeepPoly/CROWN
 
-      if lb > 0:  # 所有输出 > 0
-          return SAFE
-      if ub < 0:  # 存在必然违反
-          return UNSAFE (with counterexample)
+          if lb > 0:  # 所有输出 > 0
+              return SAFE
+          if ub < 0:  # 存在必然违反
+              return UNSAFE (with counterexample)
 
-      # 2. Branch: 选择最不稳定的 ReLU
-      neuron = select_unstable_relu(bounds)  # 启发式选择
+          # 2. Branch: 选择最不稳定的 ReLU
+          neuron = select_unstable_relu(bounds)  # 启发式选择
 
-      # 3. 递归
-      result_pos = verify(spec, model, bounds ∪ {neuron ≥ 0})
-      if result_pos == UNSAFE:
-          return UNSAFE
+          # 3. 递归
+          result_pos = verify(spec, model, bounds ∪ {neuron ≥ 0})
+          if result_pos == UNSAFE:
+              return UNSAFE
 
-      result_neg = verify(spec, model, bounds ∪ {neuron < 0})
-      return result_neg
-  ```
-]
+          result_neg = verify(spec, model, bounds ∪ {neuron < 0})
+          return result_neg
+      ```
+    ]],
+  [
+    === Branching 启发式
 
-=== Branching 启发式
+    #figure(
+      table(
+        columns: 3,
+        align: left,
+        [*启发式*], [*选择标准*], [*直觉*],
+        [Largest Interval], [$max(u - l)$], [区间最大的最不确定],
+        [Closest to Zero], [$min(|l|, |u|)$], [最接近 0 的最关键],
+        [Gradient-based], [$max |nabla_x "objective"|$], [对目标影响最大],
+        [Learning-based], [神经网络预测], [从历史学习],
+      ),
+    )
 
-#figure(
-  table(
-    columns: 3,
-    align: left,
-    [*启发式*], [*选择标准*], [*直觉*],
-    [Largest Interval], [$max(u - l)$], [区间最大的最不确定],
-    [Closest to Zero], [$min(|l|, |u|)$], [最接近 0 的最关键],
-    [Gradient-based], [$max |nabla_x "objective"|$], [对目标影响最大],
-    [Learning-based], [神经网络预测], [从历史学习],
-  ),
+    === 复杂度分析
+
+    #theorem(title: "Branch & Bound 复杂度")[
+      *最坏情况*：$O(2^k)$，其中 $k$ 是 unstable ReLU 数量
+
+      *实际表现*：取决于
+      - Bounds 的 tightness（越紧需要 branch 越少）
+      - Branching 启发式的质量
+      - 问题本身的结构
+
+      *关键优化*：用 α-β-CROWN 在 runtime 优化 bounds，减少 branch 次数
+    ]
+  ],
 )
-
-=== 复杂度分析
-
-#theorem(title: "Branch & Bound 复杂度")[
-  *最坏情况*：$O(2^k)$，其中 $k$ 是 unstable ReLU 数量
-
-  *实际表现*：取决于
-  - Bounds 的 tightness（越紧需要 branch 越少）
-  - Branching 启发式的质量
-  - 问题本身的结构
-
-  *关键优化*：用 α-β-CROWN 在 runtime 优化 bounds，减少 branch 次数
-]
 
 == VNN-COMP 竞赛批判分析
 
-#warning[
+#tip[
   *读论文时必须警惕的指标陷阱！*
 
   论文声称 "验证了 68,000,000 参数网络" 时，立即检查：
 ]
 
 #grid(
-  columns: (1fr, 1fr),
+  columns: (1fr, 1fr, 1.2fr),
   gutter: 1em,
   [
     === 需要检查的指标
@@ -597,7 +625,7 @@ $ max_X min_beta [dots] lt.eq min_beta max_X [dots] $
       - $epsilon = 0.001$ 比 $epsilon = 0.3$ 验证简单得多
   ],
   [
-    === 批判性思维模式
+    === Critical Thinking
 
     #note[
       *Sound but Impractical*：
@@ -611,21 +639,24 @@ $ max_X min_beta [dots] lt.eq min_beta max_X [dots] $
 
     $ "Verified" eq.not "Practically Robust" $
   ],
+  [=== VNN-COMP 常见问题
+
+    #figure(
+      table(
+        columns: 2,
+        inset: 3pt,
+        align: horizon,
+        stroke: 0.75pt,
+        [*问题*], [*警示*],
+        [Network 太小], [只在 tiny network 上验证，无法泛化],
+        [Epsilon 太小], [$epsilon = 2/255$ 对 ImageNet 几乎没意义],
+        [Timeout 太长], [3600s 证明一个sample不实用],
+        [Certified Accuracy 低], [验证成功但只有 30% certified],
+      ),
+    )],
 )
 
-=== VNN-COMP 常见问题
 
-#figure(
-  table(
-    columns: 2,
-    align: left,
-    [*问题*], [*警示*],
-    [Network 太小], [只在 tiny network 上验证，无法泛化],
-    [Epsilon 太小], [$epsilon = 2/255$ 对 ImageNet 几乎没意义],
-    [Timeout 太长], [3600s 证明一个sample不实用],
-    [Certified Accuracy 低], [验证成功但只有 30% certified],
-  ),
-)
 
 == Part 2 易错点补充
 
@@ -692,11 +723,16 @@ $ max_X min_beta [dots] lt.eq min_beta max_X [dots] $
 == FGSM
 
 #definition(title: "Fast Gradient Sign Method")[
-  *Targeted*：
-  $ x' = x - epsilon dot "sign"(nabla_x cal(L)(f(x), t)) $
+  #grid(
+    columns: (1fr, 1fr),
+    [*Targeted*：
+      $ x' = x - epsilon dot "sign"(nabla_x cal(L)(f(x), t)) $],
+    [
+      *Untargeted*：
+      $ x' = x + epsilon dot "sign"(nabla_x cal(L)(f(x), y)) $
+    ],
+  )
 
-  *Untargeted*：
-  $ x' = x + epsilon dot "sign"(nabla_x cal(L)(f(x), y)) $
 ]
 
 === 为什么用 Sign 函数？
@@ -726,80 +762,110 @@ $ max_X min_beta [dots] lt.eq min_beta max_X [dots] $
 == C&W Attack
 
 #definition(title: "Carlini & Wagner")[
-  *原问题*（难优化）：
-  $ min_eta norm(eta)_p quad "s.t." quad f(x + eta) = t $
+  #grid(
+    columns: (1fr, 1fr),
+    gutter: 1em,
+    [*原问题*（难优化）：
+      $ min_eta norm(eta)_p quad "s.t." quad f(x + eta) = t $],
+    [
+      *松弛后*（连续可优化）：
+      $ min_eta norm(eta)_p^2 + c dot "OPS"(x + eta, t) $
 
-  *松弛后*（连续可优化）：
-  $ min_eta norm(eta)_p^2 + c dot "OPS"(x + eta, t) $
-
-  其中 $"OPS"(x', t) = max(0, max_(i eq.not t) Z(x')_i - Z(x')_t + kappa)$
+      其中 $"OPS"(x', t) = max(0, max_(i eq.not t) Z(x')_i - Z(x')_t + kappa)$
+    ],
+  )
 ]
 
-=== OPS 函数的契约
 
-$ "OPS"(x', t) lt.eq 0 quad arrow.r.long quad f(x') = t $
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    === OPS 函数的契约
 
-这是*单向蕴含*（Sound but Incomplete）：
-- OPS $lt.eq 0$ → 攻击必然成功
-- OPS $> 0$ → 不一定失败
+    $ "OPS"(x', t) lt.eq 0 quad arrow.r.long quad f(x') = t $
 
-#note[
-  参数 $kappa$（margin）控制 confidence：
-  - $kappa = 0$：只要分类正确即可
-  - $kappa > 0$：目标类 logit 至少比其他类大 $kappa$
-]
+    这是*单向蕴含*（Sound but Incomplete）：
+    - OPS $lt.eq 0$ → 攻击必然成功
+    - OPS $> 0$ → 不一定失败
+  ],
+  [
+    #note[
+      参数 $kappa$（margin）控制 confidence：
+      - $kappa = 0$：只要分类正确即可
+      - $kappa > 0$：目标类 logit 至少比其他类大 $kappa$
+    ]
+  ],
+)
+
+
 
 == PGD
 
-#algorithm(title: "Projected Gradient Descent")[
-  ```python
-  初始化: x₀ = x + random_in_ε_box
-  for k = 1 to K:
-      # 1. FGSM step
-      g_k = ∇_x L(f(x_{k-1}), y)
-      x'_k = x_{k-1} + α · sign(g_k)
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    #algorithm(title: "Projected Gradient Descent")[
+      ```python
+      初始化: x₀ = x + random_in_ε_box
+      for k = 1 to K:
+          # 1. FGSM step
+          g_k = ∇_x L(f(x_{k-1}), y)
+          x'_k = x_{k-1} + α · sign(g_k)
 
-      # 2. Projection (关键!)
-      x_k = Π_{B_ε(x)}(x'_k)
-  return x_K
-  ```
-]
+          # 2. Projection (关键!)
+          x_k = Π_{B_ε(x)}(x'_k)
+      return x_K
+      ```
+    ]
+  ],
+  [
+    对于 $ell_infinity$ 范数，投影操作非常简单：
+    $ Pi_(cal(B)_epsilon (x))(z) = "clip"(z, x - epsilon, x + epsilon) $
 
-对于 $ell_infinity$ 范数，投影操作非常简单：
-$ Pi_(cal(B)_epsilon (x))(z) = "clip"(z, x - epsilon, x + epsilon) $
+    逐dim裁剪：超出范围则拉回边界。
 
-逐dim裁剪：超出范围则拉回边界。
+    #tip[
+      投影复杂度是关键：
+      - $ell_infinity$ 球：$O(n)$（逐dim clip）
+      - $ell_2$ 球：$O(n)$（归一化）
+      - 复杂凸多面体：可能需要 QP solver
 
-#warning[
-  投影复杂度是关键：
-  - $ell_infinity$ 球：$O(n)$（逐dim clip）
-  - $ell_2$ 球：$O(n)$（归一化）
-  - 复杂凸多面体：可能需要 QP solver
+      这是 Certified Training 的计算瓶颈之一。
+    ]
 
-  这是 Certified Training 的计算瓶颈之一。
-]
+  ],
+)
+
 
 == Adversarial Training
 
-#definition(title: "Adversarial Training (PGD-AT)")[
-  $ min_theta bb(E)_((x, y) tilde cal(D)) [max_(delta in cal(B)_epsilon (0)) cal(L)(f_theta (x + delta), y)] $
+#grid(
+  columns: (1fr, 1fr),
+  [#definition(title: "Adversarial Training (PGD-AT)")[
+    $ min_theta bb(E)_((x, y) tilde cal(D)) [max_(delta in cal(B)_epsilon (0)) cal(L)(f_theta (x + delta), y)] $
 
-  - *Inner max*：用 PGD 找 worst-case 对抗sample
-  - *Outer min*：在对抗sample上做标准 SGD
-]
+    - *Inner max*：用 PGD 找 worst-case 对抗sample
+    - *Outer min*：在对抗sample上做标准 SGD
+  ]],
+  [=== 伪代码
 
-=== 伪代码
+    ```python
+    for (x, y) in train_loader:
+        # Inner Max: 找最难的对抗sample
+        x_adv = PGD_attack(x, model, epsilon, steps=10)
 
-```python
-for (x, y) in train_loader:
-    # Inner Max: 找最难的对抗sample
-    x_adv = PGD_attack(x, model, epsilon, steps=10)
+        # Outer Min: 在对抗sample上训练
+        loss = CrossEntropy(model(x_adv), y)
+        loss.backward()  # 对 θ 求gradient
+        optimizer.step()
+    ```],
+)
 
-    # Outer Min: 在对抗sample上训练
-    loss = CrossEntropy(model(x_adv), y)
-    loss.backward()  # 对 θ 求gradient
-    optimizer.step()
-```
+
+
+
 
 === Contrastive Learning 视角
 
@@ -854,111 +920,122 @@ for (x, y) in train_loader:
   ],
 )
 
-== AutoAttack：可靠的攻击评估
+#grid(
+  columns: (1fr, 1fr),
+  [== AutoAttack：可靠的攻击评估
 
-#definition(title: "AutoAttack Ensemble")[
-  *组成*#footnote[设计思想：组合多种攻击以避免假阳性（误以为model鲁棒）]：
-  1. *APGD-CE*：Auto-PGD with CE loss
-  2. *APGD-DLR*：Auto-PGD with Difference of Logits Ratio loss
-  3. *FAB*：Fast Adaptive Boundary attack
-  4. *Square Attack*：Black-box query-based attack
-]
+    #definition(title: "AutoAttack Ensemble")[
+      *组成*#footnote[设计思想：组合多种攻击以避免假阳性（误以为model鲁棒）]：
+      1. *APGD-CE*：Auto-PGD with CE loss
+      2. *APGD-DLR*：Auto-PGD with Difference of Logits Ratio loss
+      3. *FAB*：Fast Adaptive Boundary attack
+      4. *Square Attack*：Black-box query-based attack
+    ]],
+  [#tip[
+    *为什么需要 AutoAttack？*
+    - 单一攻击可能被"过拟合防御"绕过
+    - 论文可能选择性报告弱攻击结果
+    - AutoAttack 提供*标准化评估*
 
-#warning[
-  *为什么需要 AutoAttack？*
-  - 单一攻击可能被"过拟合防御"绕过
-  - 论文可能选择性报告弱攻击结果
-  - AutoAttack 提供*标准化评估*
+    *使用规则*：
+    - 报告 Robust Accuracy 时必须用 AutoAttack
+    - 自定义攻击结果只能作为*补充*
+  ]],
+)
 
-  *使用规则*：
-  - 报告 Robust Accuracy 时必须用 AutoAttack
-  - 自定义攻击结果只能作为*补充*
-]
 
 
 = Part 4: Certified Training <sec:certified>
 
-== PGD Training vs Certified Training
-
-#figure(
-  table(
-    columns: 3,
-    align: left,
-    [], [*PGD Training*], [*Certified Training*],
-    [优化空间], [输入空间 $S(x)$], [输出空间 $gamma(f^sharp (S(x)))$],
-    [Inner max], [$max_(x' in S(x)) cal(L)(f(x'), y)$], [$max_(z in gamma(f^sharp (S(x)))) cal(L)(z, y)$],
-    [使用的点], [具体对抗sample], [符号区域（含 garbage points）],
-    [保证类型], [Heuristic（可能 miss attacks）], [Sound（可证明保证）],
-    [计算方式], [具体前向传播], [符号前向传播],
-  ),
-  caption: [训练范式对比],
-)
-
-```
-PGD Training:                     Certified Training:
-
-   S(x)                              S(x)
-    ●                                 ●
-   ╱ ╲                               ╱ ╲
-  ╱   ╲     攻击空间                ╱   ╲
- ●─────●                           ●─────●
-    ↓                                  ↓
-    ↓  找 worst-case 输入             ↓  Convex Propagation
-    ↓                                  ↓
-   ●──●                            ████████  ← 输出 region
-  具体输出                           (含 garbage points)
-                                        ↓
-                                   在这里找 worst-case
-```
-
-== Certified Training Paradox
-
-实验发现：*更 tight 的 relaxation 反而导致更差的训练结果！*
-
-#figure(
-  table(
-    columns: 3,
-    align: center,
-    [*Relaxation*], [*Tightness*], [*Certified Accuracy*],
-    [Box (IBP)], [Low], [86%],
-    [Zonotope], [Medium], [73%],
-    [DeepPoly], [High], [70%],
-  ),
-  caption: [Tightness vs Training Performance（反直觉！）],
-)
-
-=== 原因分析
-
 #grid(
   columns: (1fr, 1fr),
-  gutter: 1em,
   [
-    *Sensitivity（敏感性）*：
-    - DeepPoly 有 discrete switching（选 $alpha$ 时）
-    - 权重小变化 → bounds 剧变
-    - gradient不稳定
+    == PGD Training vs Certified Training
+
+    #figure(
+      table(
+        columns: 3,
+        align: left,
+        [], [*PGD Training*], [*Certified Training*],
+        [优化空间], [输入空间 $S(x)$], [输出空间 $gamma(f^sharp (S(x)))$],
+        [Inner max], [$max_(x' in S(x)) cal(L)(f(x'), y)$], [$max_(z in gamma(f^sharp (S(x)))) cal(L)(z, y)$],
+        [使用的点], [具体对抗sample], [符号区域（含 garbage points）],
+        [保证类型], [Heuristic（可能 miss attacks）], [Sound（可证明保证）],
+        [计算方式], [具体前向传播], [符号前向传播],
+      ),
+      caption: [训练范式对比],
+    )
+
+    ```
+    PGD Training:                     Certified Training:
+
+       S(x)                              S(x)
+        ●                                 ●
+       ╱ ╲                               ╱ ╲
+      ╱   ╲     攻击空间                ╱   ╲
+     ●─────●                           ●─────●
+        ↓                                  ↓
+        ↓  找 worst-case 输入             ↓  Convex Propagation
+        ↓                                  ↓
+       ●──●                            ████████  ← 输出 region
+      具体输出                           (含 garbage points)
+                                            ↓
+                                       在这里找 worst-case
+    ```
   ],
   [
-    *Discontinuity（不连续性）*：
-    - 复杂 relaxation 引入更多不连续点
-    - 优化 landscape 更难 navigate
+    == Certified Training Paradox
+
+    实验发现：*更 tight 的 relaxation 反而导致更差的训练结果！*
+
+    #figure(
+      table(
+        columns: 3,
+        align: center,
+        [*Relaxation*], [*Tightness*], [*Certified Accuracy*],
+        [Box (IBP)], [Low], [86%],
+        [Zonotope], [Medium], [73%],
+        [DeepPoly], [High], [70%],
+      ),
+      caption: [Tightness vs Training Performance（反直觉！）],
+    )
+
+    === 原因分析
+
+    #grid(
+      columns: (1fr, 1fr),
+      gutter: 1em,
+      [
+        *Sensitivity（敏感性）*：
+        - DeepPoly 有 discrete switching（选 $alpha$ 时）
+        - 权重小变化 → bounds 剧变
+        - gradient不稳定
+      ],
+      [
+        *Discontinuity（不连续性）*：
+        - 复杂 relaxation 引入更多不连续点
+        - 优化 landscape 更难 navigate
+      ],
+    )
+
+    ```
+    Box 的优化 landscape:          DeepPoly 的优化 landscape:
+
+        ╲    ╱                        ╱╲  ╱╲  ╱╲
+         ╲  ╱                        ╱  ╲╱  ╲╱  ╲
+          ╲╱                        ╱           ╲
+        smooth!                     discontinuous!
+    ```
+
+    #note[
+      反直觉但重要：*Tightness $eq.not$ Optimizability*
+
+      Box 虽然松（精度低），但gradient平滑，反而更好优化。
+    ]
   ],
 )
 
-```
-Box 的优化 landscape:          DeepPoly 的优化 landscape:
 
-    ╲    ╱                        ╱╲  ╱╲  ╱╲
-     ╲  ╱                        ╱  ╲╱  ╲╱  ╲
-      ╲╱                        ╱           ╲
-    smooth!                     discontinuous!
-```
-
-#note[
-  反直觉但重要：*Tightness $eq.not$ Optimizability*
-
-  Box 虽然松（精度低），但gradient平滑，反而更好优化。
-]
 
 == SABR: Layer-wise Training
 
@@ -983,7 +1060,7 @@ Input     Layer 1    Layer 2    Layer 3    Output
  S(x) ──convex──→ Shape ──PGD──→ worst points
 ```
 
-#warning[
+#tip[
   投影问题：PGD 需要投影到 $S(x)$，但中间层 shape 可能不是 $ell_infinity$ 球！
 
   - $ell_infinity$ ball 投影：简单 clip
@@ -994,31 +1071,33 @@ Input     Layer 1    Layer 2    Layer 3    Output
 
 == Logic → Loss Translation
 
-#definition(title: "逻辑约束到损失函数")[
-  任意逻辑公式 $phi$ 可翻译为损失 $L_phi$，满足：
-  $ L_phi (x) = 0 quad arrow.l.r.double quad x tack.double phi $
-]
-
-#figure(
-  table(
-    columns: 2,
-    align: left,
-    [*公式 $phi$*], [*损失 $L_phi$*],
-    [$t_1 = t_2$], [$(t_1 - t_2)^2$],
-    [$t_1 lt.eq t_2$], [$max(0, t_1 - t_2)^2$],
-    [$phi_1 and phi_2$], [$L_(phi_1) + L_(phi_2)$],
-    [$phi_1 or phi_2$], [$L_(phi_1) dot L_(phi_2)$],
-  ),
-  caption: [Logic → Loss 翻译表],
+#grid(
+  columns: (2fr, 1fr),
+  [#definition(title: "逻辑约束到loss函数")[
+      任意逻辑公式 $phi$ 可翻译为loss $L_phi$，满足：
+      $ L_phi (x) = 0 quad arrow.l.r.double quad x tack.double phi $
+    ]
+    #note[
+      这提供了处理任意 safety specs 的统一框架：
+      - Adversarial attack：$exists delta: norm(delta)_infinity lt.eq epsilon and arg max f(x + delta) eq.not y$
+      - Robustness verification：$forall delta: norm(delta)_infinity lt.eq epsilon arrow.r.double f(x + delta) = y$
+      - 训练：$min_theta max_(z in S(x)) L_(not phi)(z)$
+    ]],
+  [#figure(
+    table(
+      columns: 2,
+      align: left,
+      [*公式 $phi$*], [*loss $L_phi$*],
+      [$t_1 = t_2$], [$(t_1 - t_2)^2$],
+      [$t_1 lt.eq t_2$], [$max(0, t_1 - t_2)^2$],
+      [$phi_1 and phi_2$], [$L_(phi_1) + L_(phi_2)$],
+      [$phi_1 or phi_2$], [$L_(phi_1) dot L_(phi_2)$],
+    ),
+    caption: [Logic → Loss 翻译表],
+  )],
 )
 
 
-#note[
-  这提供了处理任意 safety specs 的统一框架：
-  - Adversarial attack：$exists delta: norm(delta)_infinity lt.eq epsilon and arg max f(x + delta) eq.not y$
-  - Robustness verification：$forall delta: norm(delta)_infinity lt.eq epsilon arrow.r.double f(x + delta) = y$
-  - 训练：$min_theta max_(z in S(x)) L_(not phi)(z)$
-]
 
 = Part 5: Randomized Smoothing & GCG Attack <sec:rs-gcg>
 
@@ -1026,71 +1105,81 @@ Input     Layer 1    Layer 2    Layer 3    Output
 
 === 核心思想
 
-#definition(title: "Smoothed Classifier")[
-  给定 base classifier $F$（黑盒），构造 smoothed classifier $G$：
-  $ G(x) = arg max_c bb(P)_(epsilon tilde cal(N)(0, sigma^2 I))[F(x + epsilon) = c] $
 
-  直觉：对每个输入，采样大量高斯噪声扰动，用 majority vote 决定输出。
-]
 
 #grid(
   columns: (1fr, 1fr),
   gutter: 1em,
   [
-    关键区分：
+    #definition(title: "Smoothed Classifier")[
+      给定 base classifier $F$（黑盒），构造 smoothed classifier $G$：
+      $ G(x) = arg max_c bb(P)_(epsilon tilde cal(N)(0, sigma^2 I))[F(x + epsilon) = c] $
+
+      直觉：对每个输入，采样大量Gaussian noise扰动，用 majority vote 决定输出。
+    ]
+  ],
+  [关键区分：
     - *定理保证是 deterministic*（数学证明）
     - *实践估计是 probabilistic*（采样 Monte Carlo）
 
     不要混淆这两者！
-  ],
-  [
     ```
     Base Classifier F（可能脆弱）
              ↓
-        🎲 高斯噪声包裹
+        🎲 Gaussian noise包裹
              ↓
     Smoothed Classifier G（构造出鲁棒性）
     ```
   ],
 )
 
-=== Certified Radius
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    === Certified Radius
 
-#theorem(title: "认证半径公式")[
-  设 $underline(p_A)$ 为最高类prob的下界，且 $underline(p_A) > 0.5$，则：
-  $ R = sigma dot Phi^(-1)(underline(p_A)) $
+    #theorem(title: "认证半径公式")[
+      设 $underline(p_A)$ 为最高类prob的下界，且 $underline(p_A) > 0.5$，则：
+      $ R = sigma dot Phi^(-1)(underline(p_A)) $
 
-  其中 $Phi^(-1)$ 是标准正态 CDF 的逆函数（probit function）。
-]
+      其中 $Phi^(-1)$ 是标准正态 CDF 的逆函数（probit function）。
+    ]
 
-#warning[
-  增大 $sigma$ 不一定增大 $R$！
-  - 直接效应：$sigma$ 项增大
-  - 间接效应：$p_A$ 降低（噪声大，分类散乱）
+    #tip[
+      增大 $sigma$ 不一定增大 $R$！
+      - 直接效应：$sigma$ 项增大
+      - 间接效应：$p_A$ 降低（噪声大，分类散乱）
 
-  存在最优 $sigma^*$，需 empirical tuning。
-]
+      存在最优 $sigma^*$，需 empirical tuning。
+    ]
+  ],
+  [
+    === 两阶段采样
 
-=== 两阶段采样
+    #algorithm(title: "Certification Pipeline")[
+      *Stage 1*（Exploration，$n_0 approx 100$）：
+      ```python
+      votes = [F(x + noise) for _ in range(n0)]
+      c_A = most_common(votes)  # 猜测 top class
+      ```
 
-#algorithm(title: "Certification Pipeline")[
-  *Stage 1*（Exploration，$n_0 approx 100$）：
-  ```python
-  votes = [F(x + noise) for _ in range(n0)]
-  c_A = most_common(votes)  # 猜测 top class
-  ```
+      *Stage 2*（Certification，$n approx 10^5$）：
+      ```python
+      votes = [F(x + noise) for _ in range(n)]
+      p_A_hat = count(votes == c_A) / n
+      p_A_lower = binomial_CI_lower(p_A_hat, n, α)
+      if p_A_lower > 0.5:
+          R = σ * Φ⁻¹(p_A_lower)
+      else:
+          return "Abstain"
+      ```
+    ]
+  ],
+)
 
-  *Stage 2*（Certification，$n approx 10^5$）：
-  ```python
-  votes = [F(x + noise) for _ in range(n)]
-  p_A_hat = count(votes == c_A) / n
-  p_A_lower = binomial_CI_lower(p_A_hat, n, α)
-  if p_A_lower > 0.5:
-      R = σ * Φ⁻¹(p_A_lower)
-  else:
-      return "Abstain"
-  ```
-]
+
+
 
 === Deterministic vs Randomized Smoothing
 
@@ -1120,7 +1209,7 @@ Input     Layer 1    Layer 2    Layer 3    Output
   - $ell_1$：需要 Laplace noise，但 certified radius 公式更复杂
 ]
 
-#warning[
+#tip[
   不要与 DP 中的 Laplace vs Gaussian 混淆！
   - DP 中：Laplace 对应 $ell_1$ *敏感度*，Gaussian 对应 $ell_2$ *敏感度*
   - RS 中：Gaussian 对应 $ell_2$ *certified radius*
@@ -1159,7 +1248,7 @@ Input     Layer 1    Layer 2    Layer 3    Output
   [
     === 考试常考对比
 
-    #warning[
+    #tip[
       *常见陷阱*：
       - 误以为 RS 是 probabilistic method（定理是确定性的！）
       - 混淆 DP 和 RS 的噪声含义
@@ -1213,30 +1302,39 @@ LLM 输入是 discrete tokens，不能直接用 PGD（需连续空间）。
   ```
 ]
 
-#warning[
+#tip[
   GCG 不是在连续空间更新，而是用gradient作为启发式筛选候选，再回到离散空间做 greedy search。
 ]
 
-=== White-box vs Black-box
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    === White-box vs Black-box
 
-#figure(
-  table(
-    columns: 3,
-    align: left,
-    [], [*White-box GCG*], [*Black-box*],
-    [gradient], [可用], [不可用],
-    [初始化], [随机即可], [需强初始化（FIM Inversion）],
-    [速度], [快（Top-K 筛选）], [慢（盲目搜索）],
-  ),
+    #figure(
+      table(
+        columns: 3,
+        align: left,
+        [], [*White-box GCG*], [*Black-box*],
+        [gradient], [可用], [不可用],
+        [初始化], [随机即可], [需强初始化（FIM Inversion）],
+        [速度], [快（Top-K 筛选）], [慢（盲目搜索）],
+      ),
+    )
+  ],
+  [Black-box 策略：用 Fill-in-the-Middle model做 inversion attack，先写恶意代码，反推 prefix 作为强初始化。
+    === Universal & Transferable Suffix
+
+    $ min_("suffix") sum_(i=1)^M cal(L)("Sure" | "prompt"_i, "suffix") $
+
+    在多个 prompts 上同时优化 → universal suffix → 可 transfer 到其他model（甚至 GPT-4）。
+
+  ],
 )
 
-Black-box 策略：用 Fill-in-the-Middle model做 inversion attack，先写恶意代码，反推 prefix 作为强初始化。
 
-=== Universal & Transferable Suffix
 
-$ min_("suffix") sum_(i=1)^M cal(L)("Sure" | "prompt"_i, "suffix") $
-
-在多个 prompts 上同时优化 → universal suffix → 可 transfer 到其他model（甚至 GPT-4）。
 
 == Mixed Adversarial Training
 
@@ -1295,7 +1393,7 @@ $
   cal(L) = underbrace(cal(L)_("clean")(theta), "现在安全") + lambda underbrace(cal(L)_("attack")(theta - nabla cal(L)_("user")(theta)), "未来恶意")
 $
 
-#warning[
+#tip[
   需要二阶导数（Hessian），计算成本高：
   $
     frac(partial cal(L)(theta'), partial theta) = frac(partial cal(L), partial theta') dot (I - eta nabla^2 cal(L)_("user"))
@@ -1303,66 +1401,77 @@ $
 ]
 
 = Part 6: 考试要点 <sec:exam>
-
 == 核心概念速查
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    === Sound vs Complete
 
-=== Sound vs Complete
+    - *Sound*：证明成立 → 确实成立（不会误报安全）
+    - *Complete*：确实成立 → 能够证明（不会漏报可证性质）
+    - 大多数实用方法：Sound but Incomplete
 
-- *Sound*：证明成立 → 确实成立（不会误报安全）
-- *Complete*：确实成立 → 能够证明（不会漏报可证性质）
-- 大多数实用方法：Sound but Incomplete
+    === Crossing ReLU
 
-=== Crossing ReLU
+    - 定义：输入 bounds $l < 0 < u$
+    - MILP 复杂度：$O(2^k)$，$k$ = Crossing ReLU 数量（非总神经元数）
+    - 减少方法：更 tight 的 bounds，Certified Training
+  ],
+  [
+    === Min-Max 结构
 
-- 定义：输入 bounds $l < 0 < u$
-- MILP 复杂度：$O(2^k)$，$k$ = Crossing ReLU 数量（非总神经元数）
-- 减少方法：更 tight 的 bounds，Certified Training
+    $ min_theta max_(delta in Delta) cal(L)(f_theta (x + delta), y) $
 
-=== Min-Max 结构
+    - Attack：固定 $theta$，找 $delta$
+    - Defense：同时优化两者
+    - Certification：用 convex relaxation 替代 inner max
 
-$ min_theta max_(delta in Delta) cal(L)(f_theta (x + delta), y) $
+    === 参数含义
 
-- Attack：固定 $theta$，找 $delta$
-- Defense：同时优化两者
-- Certification：用 convex relaxation 替代 inner max
-
-=== 参数含义
-
-- $alpha$：ReLU 下界斜率（$in [0, 1]$），可优化
-- $beta$：Lagrange 乘子（$gt.eq 0$），编码 split 约束
-- 两者只影响 tightness，不影响 soundness
-
-== 方法对比表
-
-#figure(
-  table(
-    columns: 5,
-    align: center,
-    [*方法*], [*Sound*], [*Complete*], [*复杂度*], [*GPU*],
-    [Box/IBP], [✓], [✗], [$O(n)$], [✓],
-    [DeepPoly], [✓], [✗], [$O(n^3 L^2)$], [✓],
-    [MILP], [✓], [✓], [$O(2^k)$], [✗],
-    [RS], [统计], [—], [$O(n_("samples"))$], [✓],
-  ),
+    - $alpha$：ReLU 下界斜率（$in [0, 1]$），可优化
+    - $beta$：Lagrange 乘子（$gt.eq 0$），编码 split 约束
+    - 两者只影响 tightness，不影响 soundness
+  ],
 )
 
-== 易错点
+#grid(
+  columns: (1fr, 1fr),
+  gutter: (),
+  [== 方法对比表
 
-*Crossing ReLU 数量*：复杂度取决于 crossing neurons，不是总神经元数
+    #figure(
+      table(
+        columns: 5,
+        align: center,
+        [*方法*], [*Sound*], [*Complete*], [*复杂度*], [*GPU*],
+        [Box/IBP], [✓], [✗], [$O(n)$], [✓],
+        [DeepPoly], [✓], [✗], [$O(n^3 L^2)$], [✓],
+        [MILP], [✓], [✓], [$O(2^k)$], [✗],
+        [RS], [统计], [—], [$O(n_("samples"))$], [✓],
+      ),
+    )],
+  [== 易错点
 
-*Back-substitution 符号*：负系数需要用 opposite bound
+    *Crossing ReLU 数量*：复杂度取决于 crossing neurons，不是总神经元数
 
-*浮点 soundness*：$"Sound"_("theory") eq.not "Sound"_("hardware")$
+    *Back-substitution 符号*：负系数需要用 opposite bound
 
-*Training paradox*：更 tight $eq.not$ 更好优化
+    *浮点 soundness*：$"Sound"_("theory") eq.not "Sound"_("hardware")$
 
-*RS 保证类型*：定理是 deterministic，估计是 probabilistic
+    *Training paradox*：更 tight $eq.not$ 更好优化
 
-*增大 $sigma$*：不一定增大 $R$（$p_A$ 会下降）
+    *RS 保证类型*：定理是 deterministic，估计是 probabilistic
 
-*GCG vs PGD*：GCG 用gradient筛选，不是用gradient更新
+    *增大 $sigma$*：不一定增大 $R$（$p_A$ 会下降）
 
-*$n_0$ vs $n$*：Classification ($n_0$) vs Estimation ($n$)，信息复杂度不同
+    *GCG vs PGD*：GCG 用gradient筛选，不是用gradient更新
+
+    *$n_0$ vs $n$*：Classification ($n_0$) vs Estimation ($n$)，信息复杂度不同],
+)
+
+
+
 
 = Part 7: Privacy & Differential Privacy <sec:privacy>
 
@@ -1399,8 +1508,9 @@ $ min_theta max_(delta in Delta) cal(L)(f_theta (x + delta), y) $
 )
 
 === $epsilon$-DP 黄金公式
-
-#theorem(title: "$epsilon$-Differential Privacy")[
+#grid(
+  columns: (1fr,1fr),
+  [#theorem(title: "$epsilon$-Differential Privacy")[
   $ forall S, forall (D, D') "neighbors": quad P[M(D) in S] lt.eq e^epsilon dot P[M(D') in S] $
 
   当 $epsilon$ 很小时：$e^epsilon approx 1 + epsilon$
@@ -1408,12 +1518,11 @@ $ min_theta max_(delta in Delta) cal(L)(f_theta (x + delta), y) $
   *双边界*（利用邻居对称性）：
   $ (1 - epsilon) P[M(D') in S] lt.eq P[M(D) in S] lt.eq (1 + epsilon) P[M(D') in S] $
 ]
-
-#warning[
+  #tip[
   实践中 $epsilon = 5$ 或 $epsilon = 8$ 很常见，此时 $e^8 approx 2981$，线性近似*完全失效*！
 ]
-
-=== $(epsilon, delta)$-DP 放松
+],
+  [=== $(epsilon, delta)$-DP 放松
 
 #definition(title: "$(epsilon, delta)$-DP")[
   $ P[M(D) in S] lt.eq e^epsilon dot P[M(D') in S] + delta $
@@ -1421,7 +1530,9 @@ $ min_theta max_(delta in Delta) cal(L)(f_theta (x + delta), y) $
   *$delta$ 的含义*：不是"允许泄露的prob"，而是分布尾部的质量界。
 
   通常要求 $delta lt.double 1/n$（$n$ 是dataset大小）。
-]
+]],
+)
+
 
 === 邻居关系的三种定义
 
@@ -1709,7 +1820,7 @@ $ min_theta max_(delta in Delta) cal(L)(f_theta (x + delta), y) $
   ],
 )
 
-#warning[
+#tip[
   Model Inversion 生成的是*类别的平均特征*，不是具体个人的精确照片。但对于敏感类别（如人脸），这仍然是严重的隐私泄露。
 ]
 
@@ -1746,7 +1857,7 @@ $ min_theta max_(delta in Delta) cal(L)(f_theta (x + delta), y) $
   ```
 ]
 
-#warning[
+#tip[
   对 LLM *完全不适用*——谁能训练 64 个 GPT-4？
 ]
 
@@ -1812,7 +1923,7 @@ $ min_theta max_(delta in Delta) cal(L)(f_theta (x + delta), y) $
   ],
 )
 
-#warning[
+#tip[
   *LiRA 的局限*：
   - 需要训练大量 Shadow Models（>256）
   - 对 LLM 不可行
@@ -1821,7 +1932,7 @@ $ min_theta max_(delta in Delta) cal(L)(f_theta (x + delta), y) $
 
 === MIA 实际表现
 
-#warning[
+#tip[
   *AUC $approx$ 0.5~0.7*：接近随机猜测！
 
   *Low FPR 区域才重要*：当 FPR = 0.01 时，TPR 可能只有 2%。
@@ -1855,42 +1966,51 @@ $ min_theta max_(delta in Delta) cal(L)(f_theta (x + delta), y) $
   ],
 )
 
-== Dataset Inference
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  [
+    == Dataset Inference
 
-#definition(title: "从单点到dataset")[
-  *动机*：
-  - 单点 MIA 太难、太 expensive
-  - 数据拥有者通常有*整个dataset*
-  - 弱信号聚合后 → 强信号
-]
+    #definition(title: "从单点到dataset")[
+      *动机*：
+      - 单点 MIA 太难、太 expensive
+      - 数据拥有者通常有*整个dataset*
+      - 弱信号聚合后 → 强信号
+    ]
 
-*T 检验*：
-$
-  t = frac(overline(x)_("pub") - overline(x)_("val"), sqrt(frac(s_("pub")^2, n_("pub")) + frac(s_("val")^2, n_("val"))))
-$
+    *T 检验*：
+    $
+      t = frac(overline(x)_("pub") - overline(x)_("val"), sqrt(frac(s_("pub")^2, n_("pub")) + frac(s_("val")^2, n_("val"))))
+    $
 
-若 p-value $< alpha$，则 reject $H_0$ → dataset被使用。
+    若 p-value $< alpha$，则 reject $H_0$ → dataset被使用。
+  ],
+  [
+    == Memorization
 
-== Memorization
+    #definition(title: "K-Extractable")[
+      字符串 $S$ 是 K-extractable，若存在 prefix $P$：
+      $ P || S in D_("train") and M(P) = S "（greedy decoding）" $
+    ]
 
-#definition(title: "K-Extractable")[
-  字符串 $S$ 是 K-extractable，若存在 prefix $P$：
-  $ P || S in D_("train") and M(P) = S "（greedy decoding）" $
-]
+    *影响因素*：
 
-*影响因素*：
-
-#figure(
-  table(
-    columns: 3,
-    align: left,
-    [*因素*], [*关系*], [*原因*],
-    [Model Size], [正相关], [更大容量 → 更能"记住"],
-    [Prefix Length], [正相关], [更多 context → 更窄的 continuation 分布],
-    [Repetition], [正相关], [gradient更新越多 → 记得越牢],
-    [Sequence Length], [负相关], [累积错误],
-  ),
+    #figure(
+      table(
+        columns: 3,
+        align: left,
+        [*因素*], [*关系*], [*原因*],
+        [Model Size], [正相关], [更大容量 → 更能"记住"],
+        [Prefix Length], [正相关], [更多 context → 更窄的 continuation 分布],
+        [Repetition], [正相关], [gradient更新越多 → 记得越牢],
+        [Sequence Length], [负相关], [累积错误],
+      ),
+    )
+  ],
 )
+
+
 
 == DP 与 RS 的对偶性
 
@@ -2020,8 +2140,8 @@ $
 == Agentic AI 安全
 
 #definition(title: "Indirect Prompt Injection (IPI)")[
-  *攻击链*#footnote[核心问题：model无法区分"用户指令"vs"工具输出中的指令"]：
-
+  *攻击链*：
+  (核心问题：model无法区分"用户指令"vs"工具输出中的指令")
   ```
   Attacker ──► Environment ──► Agent ──► Sensitive Action
   (发送邮件)    (收件箱)      (Cursor/GPT)  (读取私有仓库)
@@ -2056,7 +2176,7 @@ $
   ],
 )
 
-#warning[
+#tip[
   *核心张力*：$"Security" prop 1/"Capability"$;
   Planner 不看工具输出 → 安全但无法做动态任务（如"根据邮件内容决定下一步"）
 ]
@@ -2066,7 +2186,7 @@ $
 #theorem(title: "敏感度同时量化攻击能力和防御代价")[
   *在攻击中*：敏感度高 → gradient信息量大 → 易反推数据
 
-  *在防御中*：敏感度高 → 需要更多噪声 → 效用损失大
+  *在防御中*：敏感度高 → 需要更多噪声 → 效用loss大
 
   $ sigma = frac(Delta_2 f dot sqrt(2 ln(1.25/delta)), epsilon) $
 
@@ -2222,7 +2342,7 @@ $
 #note[
   关键参数：
   - $gamma$：Green tokens 比例（通常 0.5）
-  - $delta$：偏置强度（越大水印越强，但质量损失越大）
+  - $delta$：偏置强度（越大水印越强，但质量loss越大）
   - $h$：context 窗口大小（用多少前置 token 做 hash）
 ]
 
@@ -2239,7 +2359,7 @@ $
   *判定规则*：若 p-value $< alpha$ 则判定有水印。
 ]
 
-#warning[
+#tip[
   $alpha$ 直接控制 False Positive Rate！设 $alpha = 10^(-6)$ 意味着每百万次误判一次。
 ]
 
@@ -2436,7 +2556,7 @@ $
     - $F$：相似度函数（*核心难点*）
     - $tau$：阈值
 
-    #warning[
+    #tip[
       定义 $F$ 非常难！完全相同？语义相同？换个说法算不算？
     ]
   ],
@@ -2523,7 +2643,7 @@ $
     - *True generalization*：测试*能力*而非*记忆*
     - *Continuous evaluation*：持续跟踪进展
 
-    #warning[
+    #tip[
       *问题*：可能与旧 benchmark 不可比
 
       *解决*：使用 IRT/Polyrating 统一 scale
@@ -2548,12 +2668,12 @@ $
 == Scoring Mechanisms
 
 #grid(
-  columns: (1fr, 1fr),
+  columns: (1fr, 1fr, 1fr),
   gutter: 1em,
   [
     === Goodhart's Law
 
-    #warning[
+    #tip[
       "When a measure becomes a target, it ceases to be a good measure."
 
       例如：ROUGE-N 评翻译
@@ -2573,21 +2693,24 @@ $
     - Bradley-Terry：精确解（凸优化）
     - ELO：在线近似（增量更新）
   ],
+  [
+    === Judge Bias Problem
+
+    #tip[
+      Human/LLM Judge 存在系统性偏见：
+      - ❌ 偏好更长的回答
+      - ❌ 偏好格式更好的回答（markdown, bullet points）
+      - ❌ 偏好有 emoji 的回答 😊
+      - ❌ 偏好更自信的语气
+
+      *后果*：model学会"讨好"评委，而非真正变强
+
+      *解决*：Polyrating 显式建模 bias 参数并 de-bias
+    ]
+  ],
 )
 
-=== Judge Bias Problem
 
-#warning[
-  Human/LLM Judge 存在系统性偏见：
-  - ❌ 偏好更长的回答
-  - ❌ 偏好格式更好的回答（markdown, bullet points）
-  - ❌ 偏好有 emoji 的回答 😊
-  - ❌ 偏好更自信的语气
-
-  *后果*：model学会"讨好"评委，而非真正变强
-
-  *解决*：Polyrating 显式建模 bias 参数并 de-bias
-]
 
 == Reporting Best Practices
 
@@ -2611,40 +2734,46 @@ $
   ],
 )
 
-== Watermarking 评估指标
+#grid(
+  columns: (1fr, 1fr),
+  [
+    == Watermarking 评估指标
 
-#theorem(title: "TPR @ low FPR 才是核心指标！")[
-  ```
-           TPR
-            ↑
-       1.0 ─┤      ╭──────────
-            │     ╱
-            │    ╱  ← 只关心这里！
-            │   ╱
-       0.5 ─┤  ╱
-            │ ╱
-            │╱
-       0.0 ─┼──────────────→ FPR
-            0  0.001  0.01   1.0
-               ↑
-          FPR极低时的TPR
-  ```
+    #theorem(title: "TPR @ low FPR 才是核心指标！")[
+      ```
+               TPR
+                ↑
+           1.0 ─┤      ╭──────────
+                │     ╱
+                │    ╱  ← 只关心这里！
+                │   ╱
+           0.5 ─┤  ╱
+                │ ╱
+                │╱
+           0.0 ─┼──────────────→ FPR
+                0  0.001  0.01   1.0
+                   ↑
+              FPR极低时的TPR
+      ```
 
-  其他dim：Detectability, Quality, Robustness, Security
-]
+      其他dim：Detectability, Quality, Robustness, Security
+    ]
+  ],
+  [
+    == 易错点
 
-== Part 8 易错点
+    *Detection 需要 LLM?*：❌ 只需 secret key，无需 LLM！
 
-*Detection 需要 LLM?*：❌ 只需 secret key，无需 LLM！
+    *AUC 是好指标?*：❌ 只关心极低 FPR 下的 TPR
 
-*AUC 是好指标?*：❌ 只关心极低 FPR 下的 TPR
+    *Distortion-Free = 无影响?*：是*期望意义*上不改变分布
 
-*Distortion-Free = 无影响?*：是*期望意义*上不改变分布
+    *水印越强越好?*：需权衡 Quality 和 Detectability
 
-*水印越强越好?*：需权衡 Quality 和 Detectability
+    *高分 = 好model?*：可能是污染/cherry-picking
 
-*高分 = 好model?*：可能是污染/cherry-picking
+    *N-gram 检测够用?*：简单改写即可绕过
 
-*N-gram 检测够用?*：简单改写即可绕过
-
-*官方数字可信?*：检查设置是否公平、是否有遗漏
+    *官方数字可信?*：检查设置是否公平、是否有遗漏
+  ],
+)
