@@ -15,7 +15,6 @@
 #show heading.where(level: 2): set text(size: hsize2)
 #show heading: box
 #show heading: set text(fill: rgb("#663399"), weight: "bold")
-
 #show: columns.with(4, gutter: 0.5em)
 
 = 0. Intro   
