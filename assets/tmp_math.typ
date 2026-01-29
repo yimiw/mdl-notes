@@ -21,7 +21,7 @@
 
 // Vector and matrix notation
 #let vec(x) = $bold(#x)$
-#let mat(x) = $bold(#x)$
+// #let mat(x) = $bold(#x)$ <- 2026.01.29改动
 
 // Common symbols
 #let doteq = $:=$
@@ -30,7 +30,7 @@
 #let pm = $plus.minus$
 #let neq = $eq.not$
 #let sim = $tilde.op$
-
+#let iff = $"iff"$
 
 //plattue
 #let c1 = rgb("#FFF3CD") 

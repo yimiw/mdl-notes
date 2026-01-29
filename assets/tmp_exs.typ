@@ -1,21 +1,21 @@
-// ========================================
+// =================================
 // RTAI Exercise Template - 习题集模板
-// ========================================
+// =================================
 #import "tmp_math.typ": *
 
 // ========== 超参数配置 ==========
-#let num_columns = 2  // 栏数（可改为 3）
+#let num_columns = 3  // 栏数（可改为 3）
 #let page_margin = (x: 0.6cm, y: 0.8cm)
 #let base_font_size = 8pt
 
 // ========== 颜色配置 ==========
-#let primary = rgb("#3a58ed")
-#let secondary = rgb("#78716C")  // 暖灰色
+#let primary = rgb("#7C3AED")
+#let secondary = rgb("#a19b97")  // 暖灰色
 
 // ========== 问题样式组件（接受 content 类型）==========
 #let prob(title) = block(
   width: 100%,
-  fill: rgb("#F5F5F4"), // 浅灰背景
+  fill: rgb("#f7f7f1"), // 浅灰背景
   inset: 5pt,
   radius: 2pt,
   [#text(weight: "bold", size: 0.9em)[#title]],
