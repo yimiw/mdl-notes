@@ -1,9 +1,9 @@
 #import "../assets/tmp_sht.typ": *
 #show: project.with(authors: ((name: "", email: ""),))
 
-#let fsize = 8pt
-#let hsize1 = 8.5pt
-#let hsize2 = 6.5pt
+#let fsize = 10pt
+#let hsize1 = 11pt
+#let hsize2 = 10.5pt
 #let pspace = 0.1em
 #let plead = 0.18em
 
@@ -627,155 +627,155 @@ Core: $forall i: phi(i) arrow.r.double N(i) models psi$
   MIA AUC≈0.5-0.7 (basically random)
   Universal suffix transfers across models
 ]
-// = 大题
-#cbox(title: [⚙️PGD步骤])[
-  *Step 1*: 算初始logits $z_i$和分类
-  *Step 2*: 算Loss对$x$的梯度 $nabla_x cal(L)$:
-  对$cal(L)=-z_t^2+sum_(i!=t)z_i^2, (partial cal(L))  /(partial x_j)=sum_i ( (partial cal(L)) /(partial z_i))((partial z_i)/(partial x_j))$
-  ; $ (partial cal(L)) /(partial z_t)=-2z_t$; $ (partial cal(L)) /(partial z_(i!=t))=2z_i$
-  *Step 3*: update $x^"temp"=x^k pm eta dot "sign"(nabla)$ (targeted用$-$, untargeted用$+$)
-  *Step 4*: proj回$BB_epsilon(x^0)$
-  $ell_infinity$: $x_i^"new"="clip"(x_i^"temp", x_i^0-epsilon, x_i^0+epsilon)$
-  ; $ell_2$: if $||x^"temp"-x^0||>epsilon$: $x^"new"=x^0+epsilon(x^"temp"-x^0)/(||x^"temp"-x^0||)$
+// // = 大题
+// #cbox(title: [⚙️PGD步骤])[
+//   *Step 1*: 算初始logits $z_i$和分类
+//   *Step 2*: 算Loss对$x$的梯度 $nabla_x cal(L)$:
+//   对$cal(L)=-z_t^2+sum_(i!=t)z_i^2, (partial cal(L))  /(partial x_j)=sum_i ( (partial cal(L)) /(partial z_i))((partial z_i)/(partial x_j))$
+//   ; $ (partial cal(L)) /(partial z_t)=-2z_t$; $ (partial cal(L)) /(partial z_(i!=t))=2z_i$
+//   *Step 3*: update $x^"temp"=x^k pm eta dot "sign"(nabla)$ (targeted用$-$, untargeted用$+$)
+//   *Step 4*: proj回$BB_epsilon(x^0)$
+//   $ell_infinity$: $x_i^"new"="clip"(x_i^"temp", x_i^0-epsilon, x_i^0+epsilon)$
+//   ; $ell_2$: if $||x^"temp"-x^0||>epsilon$: $x^"new"=x^0+epsilon(x^"temp"-x^0)/(||x^"temp"-x^0||)$
 
-  *Step 5*: 检查是否攻击成功 ($arg max z$改变?)
-  *Step 6*: 下一轮$eta^(k+1)=eta^k\/2$ (if decay)
-]
-#cbox(title: [⚙️ MILP验证步骤])[
-  *检验编码正确性*：画约束区域图！1. 令$a=0$: 约束简化成什么？解区域是什么？; 2. 令$a=1$: 约束简化成什么？解区域是什么？; 3. 合并两个区域，应该恰好等于函数图像
-  *修复non-uniqueness* (如HatDisc在$x=0$两个值)：添加约束$x>=epsilon(1-a)$强制$x=0$时$a=1$
-]
+//   *Step 5*: 检查是否攻击成功 ($arg max z$改变?)
+//   *Step 6*: 下一轮$eta^(k+1)=eta^k\/2$ (if decay)
+// ]
+// #cbox(title: [⚙️ MILP验证步骤])[
+//   *检验编码正确性*：画约束区域图！1. 令$a=0$: 约束简化成什么？解区域是什么？; 2. 令$a=1$: 约束简化成什么？解区域是什么？; 3. 合并两个区域，应该恰好等于函数图像
+//   *修复non-uniqueness* (如HatDisc在$x=0$两个值)：添加约束$x>=epsilon(1-a)$强制$x=0$时$a=1$
+// ]
 
-#cbox(title: [⚙️ Binary Step编码])[
-  $sigma(x)=cases(1 & x>=0, 0 & x<0)$; $x in[l,u]$, $l<0<u$
-  *Case $l>=0$*: $y=1$ (constant)
-  *Case $u<0$*: $y=0$ (constant)
-  *Case $l<0<u$*: 需要$a in{0,1}$
-  $y>=a$, $y<=a$, $x>=l dot a$, $x<=u dot a + l(1-a)$...
-  (类似ReLU但输出${0,1}$不是$[0,u]$)
-]
+// #cbox(title: [⚙️ Binary Step编码])[
+//   $sigma(x)=cases(1 & x>=0, 0 & x<0)$; $x in[l,u]$, $l<0<u$
+//   *Case $l>=0$*: $y=1$ (constant)
+//   *Case $u<0$*: $y=0$ (constant)
+//   *Case $l<0<u$*: 需要$a in{0,1}$
+//   $y>=a$, $y<=a$, $x>=l dot a$, $x<=u dot a + l(1-a)$...
+//   (类似ReLU但输出${0,1}$不是$[0,u]$)
+// ]
 
-#cbox(title: [⚙️ DeepPoly计算完整流程])[
-  *Forward pass* (算concrete bounds): 1. Input: $x_1 in[l_1,u_1]$, $x_2 in[l_2,u_2]$; 2. Affine: $x_3=x_1+x_2-0.5$ → $x_3 in[l_1+l_2-0.5, u_1+u_2-0.5]$; 3. 判断ReLU类型: $l_3<0<u_3$? → crossing!; 4. ReLU symbolic: upper $x_5<=lambda(x_3-l_3)$, lower $x_5>=alpha x_3$
+// #cbox(title: [⚙️ DeepPoly计算完整流程])[
+//   *Forward pass* (算concrete bounds): 1. Input: $x_1 in[l_1,u_1]$, $x_2 in[l_2,u_2]$; 2. Affine: $x_3=x_1+x_2-0.5$ → $x_3 in[l_1+l_2-0.5, u_1+u_2-0.5]$; 3. 判断ReLU类型: $l_3<0<u_3$? → crossing!; 4. ReLU symbolic: upper $x_5<=lambda(x_3-l_3)$, lower $x_5>=alpha x_3$
   
-  *Back-substitution* (精化bounds):
-  1. 从output开始: $x_7=-x_5+x_6+3$; 2. 要算$u_7$→max $x_7$→min $x_5$, max $x_6$; 3. 替换$x_5,x_6$的symbolic bounds; 4. 继续替换直到只剩input变量; 5. 在input domain上优化(取端点!)
+//   *Back-substitution* (精化bounds):
+//   1. 从output开始: $x_7=-x_5+x_6+3$; 2. 要算$u_7$→max $x_7$→min $x_5$, max $x_6$; 3. 替换$x_5,x_6$的symbolic bounds; 4. 继续替换直到只剩input变量; 5. 在input domain上优化(取端点!)
   
-  *符号规则*: 算upper bound时: 正系数$c_i>0$: 用$x_i$的upper bound; 负系数$c_i<0$: 用$x_i$的*lower* bound!
-]
+//   *符号规则*: 算upper bound时: 正系数$c_i>0$: 用$x_i$的upper bound; 负系数$c_i<0$: 用$x_i$的*lower* bound!
+// ]
 
-#cbox(title: [⚙️ DeepPoly数值例子])[
-  $x_1,x_2 in[0,2]$; $x_3=x_1+x_2-0.5 in[-0.5,3.5]$ (crossing)
-  $x_5="ReLU"(x_3)$: $lambda=3.5/4=0.875$
-  Upper: $x_5<=0.875(x_3+0.5)=0.875x_3+0.4375$
-  Lower: $x_5>=0$ (选$alpha=0$因为$|l|=0.5<u=3.5$? 不对，$|l|<u$时选$alpha=1$)
-  实际: $|{-0.5}|=0.5<3.5$→min area用$alpha=1$: $x_5>=x_3$
+// #cbox(title: [⚙️ DeepPoly数值例子])[
+//   $x_1,x_2 in[0,2]$; $x_3=x_1+x_2-0.5 in[-0.5,3.5]$ (crossing)
+//   $x_5="ReLU"(x_3)$: $lambda=3.5/4=0.875$
+//   Upper: $x_5<=0.875(x_3+0.5)=0.875x_3+0.4375$
+//   Lower: $x_5>=0$ (选$alpha=0$因为$|l|=0.5<u=3.5$? 不对，$|l|<u$时选$alpha=1$)
+//   实际: $|{-0.5}|=0.5<3.5$→min area用$alpha=1$: $x_5>=x_3$
   
-  Back-sub $x_5$到input:
-  Upper: $x_5<=0.875(x_1+x_2-0.5)+0.4375=0.875x_1+0.875x_2$
-  Max at $x_1=x_2=2$: $u_5=3.5$
-]
+//   Back-sub $x_5$到input:
+//   Upper: $x_5<=0.875(x_1+x_2-0.5)+0.4375=0.875x_1+0.875x_2$
+//   Max at $x_1=x_2=2$: $u_5=3.5$
+// ]
 
-#cbox(title: [⚙️ Certified Training计算题])[
-  *题型*: 给网络结构和weight $w$，用Box传播，算worst-case loss，做一步GD
+// #cbox(title: [⚙️ Certified Training计算题])[
+//   *题型*: 给网络结构和weight $w$，用Box传播，算worst-case loss，做一步GD
   
-  *Step 1*: Box传播 (bounds是$w$的函数!)
-  $x_3=w x_1+b$ → $x_3 in[w l_1+b, w u_1+b]$ if $w>=0$
-  (注意$w<0$时上下界交换!)
+//   *Step 1*: Box传播 (bounds是$w$的函数!)
+//   $x_3=w x_1+b$ → $x_3 in[w l_1+b, w u_1+b]$ if $w>=0$
+//   (注意$w<0$时上下界交换!)
   
-  *Step 2*: ReLU后bounds
-  $x_5="ReLU"(x_3)$: $l_5=max(0,l_3)$, $u_5=max(0,u_3)$
+//   *Step 2*: ReLU后bounds
+//   $x_5="ReLU"(x_3)$: $l_5=max(0,l_3)$, $u_5=max(0,u_3)$
   
-  *Step 3*: Worst-case loss (CE with logits $x_7,x_8$, target=$x_8$)
-  $cal(L)_"worst"=log(1+exp(u_7-l_8))$ (max $x_7$, min $x_8$)
+//   *Step 3*: Worst-case loss (CE with logits $x_7,x_8$, target=$x_8$)
+//   $cal(L)_"worst"=log(1+exp(u_7-l_8))$ (max $x_7$, min $x_8$)
   
-  *Step 4*: 梯度 (chain rule through bounds)
-  $partial cal(L)/partial w=partial cal(L)/partial u_7 dot partial u_7/partial w+...$
+//   *Step 4*: 梯度 (chain rule through bounds)
+//   $partial cal(L)/partial w=partial cal(L)/partial u_7 dot partial u_7/partial w+...$
   
-  *Step 5*: 更新 $w_"new"=w-eta partial cal(L)/partial w$
+//   *Step 5*: 更新 $w_"new"=w-eta partial cal(L)/partial w$
   
-  *连续性*: Bounds是$w$的连续函数 (linear+max都连续)
-]
+//   *连续性*: Bounds是$w$的连续函数 (linear+max都连续)
+// ]
 
-#cbox(title: [⚙️ RS认证计算])[
-  *Given*: $sigma$, 采样结果$n$次中$n_A$次是class A
-  *Step 1*: 估计$hat(p)_A=n_A/n$
-  *Step 2*: 计算置信下界$underline(p_A)$ (Clopper-Pearson或正态近似)
-  正态近似: $underline(p_A)=hat(p)_A-z_(alpha/2)sqrt(hat(p)_A(1-hat(p)_A)/n)$
-  *Step 3*: if $underline(p_A)<=0.5$: ABSTAIN
-  *Step 4*: $R=sigma dot Phi^(-1)(underline(p_A))$
+// #cbox(title: [⚙️ RS认证计算])[
+//   *Given*: $sigma$, 采样结果$n$次中$n_A$次是class A
+//   *Step 1*: 估计$hat(p)_A=n_A/n$
+//   *Step 2*: 计算置信下界$underline(p_A)$ (Clopper-Pearson或正态近似)
+//   正态近似: $underline(p_A)=hat(p)_A-z_(alpha/2)sqrt(hat(p)_A(1-hat(p)_A)/n)$
+//   *Step 3*: if $underline(p_A)<=0.5$: ABSTAIN
+//   *Step 4*: $R=sigma dot Phi^(-1)(underline(p_A))$
   
-  *常用值*: $Phi^(-1)(0.5)=0$, $Phi^(-1)(0.84)approx 1$, $Phi^(-1)(0.975)approx 1.96$
-]
+//   *常用值*: $Phi^(-1)(0.5)=0$, $Phi^(-1)(0.84)approx 1$, $Phi^(-1)(0.975)approx 1.96$
+// ]
 
-#cbox(title: [⚙️ 为什么$sigma$大不一定$R$大])[
-  $R=sigma dot Phi^(-1)(p_A)$
-  $sigma$↑ → 直接效应: $R$↑
-  $sigma$↑ → 噪声大 → $p_A$↓ → $Phi^(-1)(p_A)$↓ → $R$↓
-  两个效应相反! 存在最优$sigma^*$
-]
+// #cbox(title: [⚙️ 为什么$sigma$大不一定$R$大])[
+//   $R=sigma dot Phi^(-1)(p_A)$
+//   $sigma$↑ → 直接效应: $R$↑
+//   $sigma$↑ → 噪声大 → $p_A$↓ → $Phi^(-1)(p_A)$↓ → $R$↓
+//   两个效应相反! 存在最优$sigma^*$
+// ]
 
-#cbox(title: [⚙️ DP敏感度计算])[
-  *$Delta_1$* (L1): 改变一条记录，输出向量L1变化max
-  *$Delta_2$* (L2): 改变一条记录，输出向量L2变化max
+// #cbox(title: [⚙️ DP敏感度计算])[
+//   *$Delta_1$* (L1): 改变一条记录，输出向量L1变化max
+//   *$Delta_2$* (L2): 改变一条记录，输出向量L2变化max
   
-  *Mean*: $f(D)=1/n sum x_i$; 加/删一个$x$: $Delta_1=||x||_1/n$
-  若$x$有界$||x||_1<=B$: $Delta_1=B/n$
+//   *Mean*: $f(D)=1/n sum x_i$; 加/删一个$x$: $Delta_1=||x||_1/n$
+//   若$x$有界$||x||_1<=B$: $Delta_1=B/n$
   
-  *$nabla$* (一个sample): $Delta_2<=C$ (after clipping!)
+//   *$nabla$* (一个sample): $Delta_2<=C$ (after clipping!)
   
-  *PATE投票*: 改变一个教师→一票变化→$n_j$改变$(+1,-1)$→$Delta_1=2$
-]
+//   *PATE投票*: 改变一个教师→一票变化→$n_j$改变$(+1,-1)$→$Delta_1=2$
+// ]
 
-#cbox(title: [⚙️ DP预算计算])[
-  *Simple Composition*: $k$个$(epsilon,delta)$-DP query → $(k epsilon, k delta)$
-  *3 columns, 2-way marginals*: $binom(3,2)=3$ queries → 总预算$3epsilon$
+// #cbox(title: [⚙️ DP预算计算])[
+//   *Simple Composition*: $k$个$(epsilon,delta)$-DP query → $(k epsilon, k delta)$
+//   *3 columns, 2-way marginals*: $binom(3,2)=3$ queries → 总预算$3epsilon$
   
-  *Subsampling*: 采样率$q=L/N$
-  $(epsilon,delta)$-DP mechanism → $(approx q epsilon, q delta)$-DP
+//   *Subsampling*: 采样率$q=L/N$
+//   $(epsilon,delta)$-DP mechanism → $(approx q epsilon, q delta)$-DP
   
-  *Advanced* ($T$ steps): $(O(sqrt(T)epsilon), delta)$ 而非 $(T epsilon, T delta)$
-]
+//   *Advanced* ($T$ steps): $(O(sqrt(T)epsilon), delta)$ 而非 $(T epsilon, T delta)$
+// ]
 
-#cbox(title: [⚙️ $nabla$ Inversion可行性])[
-  *FedSGD + BS=1*: $nabla_(W_1)cal(L)=delta dot x^top$
-  → 可精确恢复$x$! (解线性系统)
+// #cbox(title: [⚙️ $nabla$ Inversion可行性])[
+//   *FedSGD + BS=1*: $nabla_(W_1)cal(L)=delta dot x^top$
+//   → 可精确恢复$x$! (解线性系统)
   
-  *FedSGD + BS>1*: 只能恢复$sum x_i$的线性组合
-  *FedAVG*: 多步更新，需要模拟整个轨迹，更难
+//   *FedSGD + BS>1*: 只能恢复$sum x_i$的线性组合
+//   *FedAVG*: 多步更新，需要模拟整个轨迹，更难
   
-  *Binary classification ($d=2$)*: $nabla$符号直接揭示label!
-  *Multi-class ($d>3$)*: $nabla$是向量，无法唯一确定label
-]
+//   *Binary classification ($d=2$)*: $nabla$符号直接揭示label!
+//   *Multi-class ($d>3$)*: $nabla$是向量，无法唯一确定label
+// ]
 
-#cbox(title: [⚙️ $Delta_"EO"$计算步骤])[
-  *Given*: 数据表(Dataset)和预测表(Predictions)
+// #cbox(title: [⚙️ $Delta_"EO"$计算步骤])[
+//   *Given*: 数据表(Dataset)和预测表(Predictions)
   
-  *Step 1*: 算各组FPR (False Positive Rate)
-  $"FPR"_s=P(hat(Y)=1|Y=0,S=s)=(\#"预测1且真实0")/(\#"真实0")$
+//   *Step 1*: 算各组FPR (False Positive Rate)
+//   $"FPR"_s=P(hat(Y)=1|Y=0,S=s)=(\#"预测1且真实0")/(\#"真实0")$
   
-  *Step 2*: 算各组TPR (True Positive Rate)
-  $"TPR"_s=P(hat(Y)=1|Y=1,S=s)=(\#"预测1且真实1")/(\#"真实1")$
+//   *Step 2*: 算各组TPR (True Positive Rate)
+//   $"TPR"_s=P(hat(Y)=1|Y=1,S=s)=(\#"预测1且真实1")/(\#"真实1")$
   
-  *Step 3*: $Delta_"EO"=|"FPR"_0-"FPR"_1|+|"TPR"_0-"TPR"_1|$
+//   *Step 3*: $Delta_"EO"=|"FPR"_0-"FPR"_1|+|"TPR"_0-"TPR"_1|$
   
-  *Example*:
-  $S=0,Y=0$: 10人中7人预测1 → $"FPR"_0$=0.7
-  $S=0,Y=1$: 6人中3人预测1 → $"TPR"_0$=0.5
-  $S=1,Y=0$: 8人中2人预测1 → $"FPR"_1$=0.25
-  $S=1,Y=1$: 20人中16人预测1 → $"TPR"_1$=0.8
-  $Delta_"EO"=|0.7-0.25|+|0.5-0.8|=0.75$
-]
+//   *Example*:
+//   $S=0,Y=0$: 10人中7人预测1 → $"FPR"_0$=0.7
+//   $S=0,Y=1$: 6人中3人预测1 → $"TPR"_0$=0.5
+//   $S=1,Y=0$: 8人中2人预测1 → $"FPR"_1$=0.25
+//   $S=1,Y=1$: 20人中16人预测1 → $"TPR"_1$=0.8
+//   $Delta_"EO"=|0.7-0.25|+|0.5-0.8|=0.75$
+// ]
 
-#cbox(title: [⚙️ BA与$Delta$关系])[
-  *Adversary* $h(z,y)$尝试从$z$预测$S$
-  *定义*: $h(z,0)=1-g(z)$, $h(z,1)=g(z)$
+// #cbox(title: [⚙️ BA与$Delta$关系])[
+//   *Adversary* $h(z,y)$尝试从$z$预测$S$
+//   *定义*: $h(z,0)=1-g(z)$, $h(z,1)=g(z)$
   
-  *BA计算*:
-  $"BA"=1/2["accuracy on" S=0 + "accuracy on" S=1]$
+//   *BA计算*:
+//   $"BA"=1/2["accuracy on" S=0 + "accuracy on" S=1]$
   
-  For $Y=0$: $h$预测$S=0$的prob=$P(g=0|S=0,Y=0)$; 预测$S=1$的prob=$P(g=1|S=1,Y=0)$
+//   For $Y=0$: $h$预测$S=0$的prob=$P(g=0|S=0,Y=0)$; 预测$S=1$的prob=$P(g=1|S=1,Y=0)$
   
-  *Theorem*: $Delta_"EO"(g)<=2"BA"(h^*)-1$
-  验证: 若$Delta_"EO"=0.75$, BA=?(算出BA后代入验证)
-]
+//   *Theorem*: $Delta_"EO"(g)<=2"BA"(h^*)-1$
+//   验证: 若$Delta_"EO"=0.75$, BA=?(算出BA后代入验证)
+// ]
